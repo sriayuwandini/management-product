@@ -32,8 +32,6 @@
     </style>
 </head>
 <body>
-
-    {{-- Navbar untuk HP --}}
     <nav class="navbar navbar-dark bg-dark d-md-none">
         <div class="container-fluid">
             <button class="btn btn-outline-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMobile">
@@ -42,8 +40,6 @@
             <span class="navbar-brand mb-0 h1">Manajemen Produk</span>
         </div>
     </nav>
-
-    {{-- Sidebar Desktop --}}
     <nav class="d-none d-md-flex flex-column flex-shrink-0 p-3 text-bg-dark sidebar-desktop position-fixed">
         <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
             <i class="bi bi-book fs-3 me-2"></i> 
@@ -62,7 +58,7 @@
         <hr>
         <div class="dropdown">
             <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2"> 
+                <img src={{ asset('storage/ayu.jpg') }} alt="" width="32" height="32" class="rounded-circle me-2"> 
                 <strong>Admin</strong> 
             </a>
             <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
@@ -74,7 +70,6 @@
         </div>
     </nav>
 
-    {{-- Sidebar Mobile (Offcanvas) --}}
     <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="sidebarMobile">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title">Manajemen Produk</h5>
@@ -106,12 +101,10 @@
         </div>
     </div>
 
-    {{-- Main Content --}}
     <main class="main-content">
         @yield('content')
     </main>
 
-    {{-- Bootstrap JS --}}
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
