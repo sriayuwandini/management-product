@@ -66,7 +66,10 @@
                             <select id="role" name="role"
                                     class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500">
                                 <option value="">-- Pilih Role --</option>
-                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="owner" {{ old('role') == 'owner' ? 'selected' : '' }}>Owner</option>
+                                <option value="admin_produksi" {{ old('role') == 'admin_produksi' ? 'selected' : '' }}>Admin Produksi</option>
+                                <option value="admin_penjualan" {{ old('role') == 'admin_penjualan' ? 'selected' : '' }}>Admin Penjualan</option>
+                                <option value="sales" {{ old('role') == 'sales' ? 'selected' : '' }}>Sales</option>
                                 <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
                             </select>
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />

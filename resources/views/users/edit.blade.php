@@ -10,14 +10,14 @@
 
             <div class="bg-white shadow-xl sm:rounded-lg p-6">
                 <a href="{{ route('users.index') }}"
-                class=" inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-lg shadow-sm transition">
+                class="inline-flex items-center px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm font-medium rounded-lg shadow-sm transition">
                     <i class="bi bi-arrow-left mr-1"></i> Kembali
                 </a>
+
                 <form action="{{ route('users.update', $user->id) }}" method="POST" class="space-y-6">
                     @csrf
                     @method('PUT')
 
-                    {{-- Nama --}}
                     <div>
                         <label for="name" class="block text-sm font-medium text-gray-700">Nama</label>
                         <input type="text" name="name" id="name"
@@ -28,7 +28,6 @@
                         @enderror
                     </div>
 
-                    {{-- Email --}}
                     <div>
                         <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                         <input type="email" name="email" id="email"
@@ -39,7 +38,6 @@
                         @enderror
                     </div>
 
-                    {{-- Password --}}
                     <div>
                         <label for="password" class="block text-sm font-medium text-gray-700">
                             Password (Kosongkan jika tidak diubah)
@@ -57,7 +55,6 @@
                         @enderror
                     </div>
 
-                    {{-- Konfirmasi Password --}}
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-gray-700">
                             Konfirmasi Password
@@ -72,24 +69,25 @@
                         </div>
                     </div>
 
-                    {{-- Role --}}
                     <div>
                         <label for="role" class="block text-sm font-medium text-gray-700">Role</label>
                         <select name="role" id="role"
                             class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm @error('role') border-red-500 @enderror" required>
                             <option value="">-- Pilih Role --</option>
-                            <option value="admin" {{ old('role', $user->getRoleNames()->first()) == 'admin' ? 'selected' : '' }}>Admin</option>
-                            <option value="user" {{ old('role', $user->getRoleNames()->first()) == 'user' ? 'selected' : '' }}>User</option>
+                            @foreach($roles as $role)
+                                <option value="{{ $role }}" {{ old('role', $user->getRoleNames()->first()) == $role ? 'selected' : '' }}>
+                                    {{ ucfirst(str_replace('_', ' ', $role)) }}
+                                </option>
+                            @endforeach
                         </select>
                         @error('role')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    {{-- Tombol Submit --}}
                     <div class="flex justify-end">
                         <button type="submit"
-                            class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-black text-sm font-medium rounded-lg shadow-sm transition">
+                            class="inline-flex items-center px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-sm transition">
                             <i class="bi bi-save mr-1"></i> Update
                         </button>
                     </div>
@@ -98,7 +96,6 @@
         </div>
     </div>
 
-    {{-- JS Toggle Password --}}
     <script>
         function setupToggle(inputId, buttonId, iconId) {
             const button = document.getElementById(buttonId);

@@ -10,6 +10,16 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
+    public function hasPermissionTo($permission, $guardName = null): bool
+    {
+        if ($this->hasRole('owner')) {
+            return true;
+        }
+
+        return parent::hasPermissionTo($permission, $guardName);
+    }
+
+
     use HasFactory, Notifiable, HasRoles;
 
     /**
