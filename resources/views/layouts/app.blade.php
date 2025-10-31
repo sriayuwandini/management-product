@@ -1,110 +1,156 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="auto">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>@yield('title', 'Dashboard')</title>
-    
-    {{-- Bootstrap CSS --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    {{-- Bootstrap Icons --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{{ config('app.name', 'Laravel') }}</title>
+
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        .sidebar-desktop {
-            width: 280px;
-            height: 100vh;
+        .sidebar {
+            width: 240px;
+            background-color: #1f2937; 
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .sidebar a {
+            display: block;
+            padding: 0.75rem 1rem;
+            color: white;
+            border-radius: 0.5rem;
+            text-decoration: none;
+        }
+        .sidebar a:hover,
+        .sidebar a.active {
+            background-color: #2563eb;
         }
         .main-content {
-            margin-left: 280px;
-            padding: 20px;
+            margin-left: 240px;
+            padding: 2rem;
         }
         @media (max-width: 768px) {
-            .main-content { margin-left: 0; padding: 10px; }
+            .sidebar {
+                position: relative;
+                width: 100%;
+                flex-direction: column;
+            }
+            .main-content {
+                margin-left: 0;
+            }
         }
-        .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+
+        .dropdown {
+            position: relative;
         }
-        .nav-link.active {
-            background-color: #0d6efd;
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            bottom: 45px;
+            background: #374151;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            width: 200px;
+        }
+        .dropdown-menu a,
+        .dropdown-menu button {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            color: #fff;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+        }
+        .dropdown-menu a:hover,
+        .dropdown-menu button:hover {
+            background: #2563eb;
+        }
+        .dropdown.open .dropdown-menu {
+            display: block;
         }
     </style>
 </head>
-<body>
-    <nav class="navbar navbar-dark bg-dark d-md-none">
-        <div class="container-fluid">
-            <button class="btn btn-outline-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebarMobile">
-                <i class="bi bi-list fs-4"></i>
-            </button>
-            <span class="navbar-brand mb-0 h1">Manajemen Produk</span>
-        </div>
-    </nav>
-    <nav class="d-none d-md-flex flex-column flex-shrink-0 p-3 text-bg-dark sidebar-desktop position-fixed">
-        <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-            <i class="bi bi-book fs-3 me-2"></i> 
-            <span class="fs-4">Manajemen Produk</span> 
-        </a>
-        <hr>
-        <ul class="nav nav-pills flex-column mb-auto">
-            <li>
-                <a href="{{ route('users.index') }}" 
-                   class="nav-link text-white {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                    <i class="bi bi-people me-2"></i>
-                    User
-                </a>
-            </li>  
-        </ul>
-        <hr>
-        <div class="dropdown">
-            <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                <img src={{ asset('storage/ayu.jpg') }} alt="" width="32" height="32" class="rounded-circle me-2"> 
-                <strong>Admin</strong> 
-            </a>
-            <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-                <li><a class="dropdown-item" href="#">Settings</a></li>
-                <li><a class="dropdown-item" href="#">Profile</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Sign out</a></li>
-            </ul>
-        </div>
-    </nav>
 
-    <div class="offcanvas offcanvas-start text-bg-dark" tabindex="-1" id="sidebarMobile">
-        <div class="offcanvas-header">
-            <h5 class="offcanvas-title">Manajemen Produk</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
-        </div>
-        <div class="offcanvas-body">
-            <ul class="nav nav-pills flex-column mb-auto">
-                <li>
-                    <a href="{{ route('users.index') }}" 
-                       class="nav-link text-white {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                        <i class="bi bi-people me-2"></i>
-                        User
-                    </a>
-                </li>  
-            </ul>
-            <hr>
-            <div class="dropdown">
-                <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                    <img src="https://github.com/mdo.png" alt="" width="32" height="32" class="rounded-circle me-2"> 
-                    <strong>Admin</strong> 
-                </a>
-                <ul class="dropdown-menu dropdown-menu-dark text-small shadow">
-                    <li><a class="dropdown-item" href="#">Settings</a></li>
-                    <li><a class="dropdown-item" href="#">Profile</a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#">Sign out</a></li>
-                </ul>
+<body class="font-sans antialiased bg-gray-100">
+    <div class="flex">
+
+        <aside class="sidebar p-4">
+            <div>
+                <div class="mb-6 text-center">
+                    <h2 class="text-xl font-bold text-white">Manajemen Produk</h2>
+
+                    <hr class="my-3 border-gray-600">
+                </div>
+
+                <nav class="space-y-2">
+                    <a href="{{ route('dashboard') }}">🏠 Dashboard</a>
+                    <a href="{{ route('users.index') }}">👥 Users</a>
+                </nav>
             </div>
+
+            <div class="mt-auto pt-6 border-t border-gray-700">
+                @php
+                    $roleName = ucfirst(Auth::user()->getRoleNames()->first() ?? 'User');
+                @endphp
+
+                <div class="dropdown" id="roleDropdown">
+                    <button type="button" class="w-full flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
+                        <span>{{ Auth::user()->name }}</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
+                             viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <div class="dropdown-menu mt-2">
+                        <a href="#">🧑‍💼 Profile</a>
+                        <a href="#">⚙️ Setting</a>
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit">🚪 Logout</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content flex-1">
+            @isset($header)
+                <header class="bg-white shadow mb-6 rounded-lg">
+                    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+                        {{ $header }}
+                    </div>
+                </header>
+            @endisset
+
+            <main>
+                {{ $slot }}
+            </main>
         </div>
     </div>
 
-    <main class="main-content">
-        @yield('content')
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const dropdown = document.getElementById("roleDropdown");
+            if (dropdown) {
+                dropdown.querySelector("button").addEventListener("click", () => {
+                    dropdown.classList.toggle("open");
+                });
+            }
+        });
+    </script>
 </body>
 </html>

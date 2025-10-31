@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('name'); 
             $table->string('email')->unique(); 
             $table->string('password'); 
-            $table->enum('role', ['admin', 'user'])->default('user'); // Kolom role yang hilang sebelumnya (bisa enum jika diperlukan)
             $table->timestamps();
         });
     }
