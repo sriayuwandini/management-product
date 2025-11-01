@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+
+    <!-- Bootstrap JS Bundle (sudah termasuk Popper.js) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
+
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
@@ -86,16 +95,45 @@
     <div class="flex">
 
         <aside class="sidebar p-4">
-            <div>
+           <div>
                 <div class="mb-6 text-center">
                     <h2 class="text-xl font-bold text-white">Manajemen Produk</h2>
-
                     <hr class="my-3 border-gray-600">
                 </div>
 
+                @php
+                    use Illuminate\Support\Facades\Auth;
+
+                    if (Auth::user()->hasRole('owner')) {
+                        $dashboardUrl = url('/owner/dashboard');
+                    } elseif (Auth::user()->hasRole('user')) {
+                        $dashboardUrl = url('/user/dashboard');
+                    } elseif (Auth::user()->hasRole('admin_produksi')) {
+                        $dashboardUrl = url('/admin/produksi/dashboard');
+                    } elseif (Auth::user()->hasRole('admin_penjualan')) {
+                        $dashboardUrl = url('/admin/penjualan/dashboard');
+                    } elseif (Auth::user()->hasRole('sales')) {
+                        $dashboardUrl = url('/sales/dashboard');
+                    } else {
+                        $dashboardUrl = url('/dashboard');
+                    }
+                @endphp
+
                 <nav class="space-y-2">
-                    <a href="{{ route('dashboard') }}">🏠 Dashboard</a>
-                    <a href="{{ route('users.index') }}">👥 Users</a>
+                    <a href="{{ $dashboardUrl }}">🏠 Dashboard</a>
+
+                    @if(Auth::user()->hasRole('admin_penjualan') || Auth::user()->hasRole('owner'))
+                        <a href="{{ route('users.index') }}">👥 Users</a>
+                    @endif
+
+                    @if(Auth::user()->hasRole('admin_produksi'))
+                        <a href="{{ route('admin.konsinyasi.index') }}">🧾 Konfirmasi Pengajuan</a>
+                    @endif
+
+                    @if(Auth::user()->hasRole('user'))
+                        <a href="{{ route('consignments.create') }}">📦 Ajukan Barang</a>
+                        <a href="{{ route('consignments.history') }}">📜 Riwayat Pengajuan</a>
+                    @endif
                 </nav>
             </div>
 
@@ -126,7 +164,6 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <div class="main-content flex-1">
             @isset($header)
                 <header class="bg-white shadow mb-6 rounded-lg">

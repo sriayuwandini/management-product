@@ -31,9 +31,9 @@ class AuthenticatedSessionController extends Controller
         }
 
         if ($user->hasRole('owner')) return redirect()->intended('/owner/dashboard');
-        if ($user->hasRole('user')) return redirect()->intended('/home');
-        if ($user->hasRole('admin produksi')) return redirect()->intended('/produksi/dashboard');
-        if ($user->hasRole('admin penjualan')) return redirect()->intended('/penjualan/dashboard');
+        if ($user->hasRole('user')) return redirect()->intended('/user/dashboard');
+        if ($user->hasRole('admin_produksi')) return redirect()->intended('/admin/produksi/dashboard');
+        if ($user->hasRole('admin_penjualan')) return redirect()->intended('/admin/penjualan/dashboard');
         if ($user->hasRole('sales')) return redirect()->intended('/sales/dashboard');
 
 
