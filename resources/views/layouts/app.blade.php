@@ -115,7 +115,8 @@
                     </button>
 
                     <div class="dropdown-menu mt-2">
-                        <a href="#">🧑‍💼 Profile</a>
+                        <a href="{{ route('profile.edit') }}"
+                            class="{{ request()->routeIs('profile.edit') ? 'active' : '' }}">🧑‍💼 Profile</a>
                         <a href="#">⚙️ Setting</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf

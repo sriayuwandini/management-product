@@ -30,7 +30,7 @@ class AuthenticatedSessionController extends Controller
             return redirect('/login')->withErrors(['email' => 'User tidak ditemukan.']);
         }
 
-        if ($user->hasRole('owner')) return redirect()->intended('/owner/dashboard');
+        if ($user->hasRole('owner')) return redirect()->intended('/dashboard');
         if ($user->hasRole('user')) return redirect()->intended('/home');
         if ($user->hasRole('admin produksi')) return redirect()->intended('/produksi/dashboard');
         if ($user->hasRole('admin penjualan')) return redirect()->intended('/penjualan/dashboard');

@@ -25,7 +25,6 @@ class UserController extends Controller
 
     public function create()
     {
-        // Ambil semua role yang ada
         $roles = Role::pluck('name', 'name')->all();
         return view('users.create', compact('roles'));
     }
