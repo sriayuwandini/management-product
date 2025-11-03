@@ -10,6 +10,7 @@ use App\Http\Controllers\{
     AdminPenjualanController,
     CategoryController,
     SalesController,
+    SalesReportController,
     UserDashboardController
 };
 
@@ -57,8 +58,11 @@ Route::middleware(['auth', 'verified', 'role:admin_penjualan'])->group(function 
 
 // SALES
 Route::middleware(['auth', 'verified', 'role:sales'])->group(function () {
-    Route::get('/sales/dashboard', [SalesController::class, 'index'])->name('sales.dashboard');
-});
+    Route::get('/sales/reports', [SalesReportController::class, 'index'])->name('sales.reports.index');
+    Route::get('/sales/reports/pdf', [SalesReportController::class, 'exportPdf'])->name('sales.reports.pdf');
+    Route::resource('sales', SalesController::class);
+   });
+
 
 // USER
 Route::middleware(['auth', 'verified', 'role:user'])->group(function () {

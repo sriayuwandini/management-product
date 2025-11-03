@@ -27,4 +27,10 @@ protected $fillable = [
         return $this->belongsTo(User::class);
     }
 
+    public function sales()
+    {
+        return $this->hasMany(Sales::class);
+    }
+
+
 }

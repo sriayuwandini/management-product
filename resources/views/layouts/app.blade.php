@@ -9,18 +9,15 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-    <!-- Bootstrap CSS -->
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-
-    <!-- Bootstrap JS Bundle (sudah termasuk Popper.js) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
+        /* Sidebar */
         .sidebar {
             width: 240px;
             background-color: #1f2937; 
@@ -42,6 +39,8 @@
         .sidebar a.active {
             background-color: #2563eb;
         }
+
+        /* Main */
         .main-content {
             margin-left: 240px;
             padding: 2rem;
@@ -57,34 +56,44 @@
             }
         }
 
+        /* Dropdown Menu */
         .dropdown {
             position: relative;
         }
+        /* Dropdown menu style fix */
         .dropdown-menu {
             display: none;
             position: absolute;
             left: 0;
             bottom: 45px;
-            background: #374151;
+            background: #1f2937 !important; /* warna sidebar */
             border-radius: 0.5rem;
             overflow: hidden;
             width: 200px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 50;
         }
+
         .dropdown-menu a,
         .dropdown-menu button {
             display: block;
             width: 100%;
             text-align: left;
             padding: 0.75rem 1rem;
-            color: #fff;
-            background: transparent;
+            color: #fff !important;
+            background: transparent !important;
             border: none;
             cursor: pointer;
+            transition: background 0.3s ease, color 0.3s ease;
         }
+
         .dropdown-menu a:hover,
-        .dropdown-menu button:hover {
-            background: #2563eb;
+        .dropdown-menu button:hover,
+        .dropdown-menu a.active {
+            background: #2563eb !important; /* biru */
+            color: #fff !important;
         }
+
         .dropdown.open .dropdown-menu {
             display: block;
         }
@@ -122,26 +131,31 @@
                 <nav class="space-y-2">
                     <a href="{{ $dashboardUrl }}">🏠 Dashboard</a>
 
+                    {{-- OWNER dan ADMIN PENJUALAN --}}
                     @if(Auth::user()->hasRole('admin_penjualan') || Auth::user()->hasRole('owner'))
                         <a href="{{ route('users.index') }}">👥 Users</a>
                     @endif
 
+                    {{-- ADMIN PRODUKSI --}}
                     @if(Auth::user()->hasRole('admin_produksi'))
                         <a href="{{ route('admin.konsinyasi.index') }}">🧾 Konfirmasi Pengajuan</a>
                     @endif
 
+                    {{-- USER --}}
                     @if(Auth::user()->hasRole('user'))
                         <a href="{{ route('consignments.create') }}">📦 Ajukan Barang</a>
                         <a href="{{ route('consignments.history') }}">📜 Riwayat Pengajuan</a>
+                    @endif
+
+                    {{-- SALES --}}
+                    @if(Auth::user()->hasRole('sales'))
+                        <a href="{{ route('sales.index') }}">🛍️ Produk</a>
+                        <a href="{{ route('sales.reports.index') }}">📊 Laporan Penjualan</a>
                     @endif
                 </nav>
             </div>
 
             <div class="mt-auto pt-6 border-t border-gray-700">
-                @php
-                    $roleName = ucfirst(Auth::user()->getRoleNames()->first() ?? 'User');
-                @endphp
-
                 <div class="dropdown" id="roleDropdown">
                     <button type="button" class="w-full flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
                         <span>{{ Auth::user()->name }}</span>
@@ -153,8 +167,8 @@
                     </button>
 
                     <div class="dropdown-menu mt-2">
-                        <a href="{{ route('profile.edit') }}"
-                            class="{{ request()->routeIs('profile.edit') ? 'active' : '' }}">🧑‍💼 Profile</a>
+                        <a href="{{ route('profile.edit') }}" 
+                           class="{{ request()->routeIs('profile.edit') ? 'active' : '' }}">🧑‍💼 Profile</a>
                         <a href="#">⚙️ Setting</a>
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
