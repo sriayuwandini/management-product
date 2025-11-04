@@ -14,13 +14,12 @@
             @php
                 $products = $user->products->where('status', 'approved');
             @endphp
-
             <div class="bg-white shadow-md rounded-xl border mb-6">
-                <div class="flex justify-between items-center p-4 border-b bg-gray-50">
+                <div class="flex justify-between items-center p-4 border-b bg-green-50">
                     <div>
                         <h6 class="font-semibold text-gray-800">👤 {{ $user->name }}</h6>
                         <p class="text-xs text-gray-500">
-                            Jumlah produk: {{ $products->count() }}
+                            Jumlah produk disetujui: {{ $products->count() }}
                         </p>
                     </div>
                     <button class="px-3 py-2 text-sm bg-green-100 hover:bg-green-200 rounded-lg text-green-700 font-medium"
@@ -38,7 +37,7 @@
                             <h5 class="modal-title font-semibold" id="modalLabel{{ $user->id }}">
                                 Detail Produk Disetujui — {{ $user->name }}
                             </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
 
                         <div class="modal-body">
@@ -53,8 +52,7 @@
                                             <th>Stok</th>
                                             <th>Deskripsi</th>
                                             <th>Foto</th>
-                                            <th>Diajukan</th>
-                                            <th>Disetujui</th>
+                                            <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -68,19 +66,71 @@
                                                 <td>{{ Str::limit($product->description, 60) }}</td>
                                                 <td class="text-center">
                                                     @if ($product->image && file_exists(storage_path('app/public/' . $product->image)))
-                                                        <button class="border rounded-lg bg-gray-100 hover:bg-gray-200 p-1"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#fotoModal{{ $product->id }}">
-                                                            <img src="{{ asset('storage/' . $product->image) }}"
-                                                                alt="Foto Produk"
-                                                                class="w-16 h-16 object-cover rounded">
-                                                        </button>
+                                                        <img src="{{ asset('storage/' . $product->image) }}" alt="Foto Produk" class="w-14 h-14 object-cover rounded mx-auto shadow">
                                                     @else
                                                         <span class="text-gray-400 text-xs">Tidak ada</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $product->created_at->format('d M Y H:i') }}</td>
-                                                <td>{{ $product->updated_at->format('d M Y H:i') }}</td>
+                                                <td class="text-center">
+                                                    <button 
+                                                        onclick="toggleRiwayat('{{ $product->id }}', this)"
+                                                        class="px-3 py-1 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg text-xs font-medium">
+                                                        📦 Lihat Riwayat
+                                                    </button>
+                                                </td>
+                                            </tr>
+
+                                            {{-- Dropdown Riwayat --}}
+                                            <tr id="riwayat-{{ $product->id }}" class="hidden bg-gray-50">
+                                                <td colspan="8" class="p-3">
+                                                    @php
+                                                        $logs = \App\Models\StockLog::where('product_id', $product->id)
+                                                            ->orderBy('created_at', 'desc')
+                                                            ->get();
+                                                    @endphp
+                                                    <h6 class="font-semibold text-gray-700 mb-2">
+                                                        📜 Riwayat Stok — {{ $product->name }}
+                                                    </h6>
+                                                    @if ($logs->isEmpty())
+                                                        <p class="text-gray-500 text-sm italic">Belum ada riwayat stok.</p>
+                                                    @else
+                                                        <div class="overflow-x-auto">
+                                                            <table class="table table-sm text-xs w-full border">
+                                                                <thead class="bg-gray-100 text-gray-600">
+                                                                    <tr>
+                                                                        <th class="px-2 py-1">#</th>
+                                                                        <th class="px-2 py-1">Tanggal</th>
+                                                                        <th class="px-2 py-1">Jumlah</th>
+                                                                        <th class="px-2 py-1">Tipe</th>
+                                                                        <th class="px-2 py-1">Keterangan</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach ($logs as $log)
+                                                                        <tr>
+                                                                            <td class="px-2 py-1">{{ $loop->iteration }}</td>
+                                                                            <td class="px-2 py-1">{{ $log->created_at->format('d M Y H:i') }}</td>
+                                                                            <td class="px-2 py-1">{{ $log->quantity }}</td>
+                                                                            <td class="px-2 py-1 capitalize">
+                                                                                @switch($log->type)
+                                                                                    @case('addition') Penambahan @break
+                                                                                    @case('reduction') Pengurangan @break
+                                                                                    @case('submit') Pengajuan Awal @break
+                                                                                    @case('resubmit') Pengajuan Ulang @break
+                                                                                    @case('cancel') Pembatalan @break
+                                                                                    @case('approve_new') Persetujuan Awal @break
+                                                                                    @case('approve_stock') Persetujuan Tambahan @break
+                                                                                    @default {{ $log->type }}
+                                                                                @endswitch
+                                                                            </td>
+                                                                            <td class="px-2 py-1 text-gray-600">{{ $log->description }}</td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    @endif
+                                                </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -92,28 +142,10 @@
                             <div>
                                 <span class="text-muted small">Total Produk: {{ $products->count() }}</span>
                             </div>
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         </div>
                     </div>
                 </div>
             </div>
-
-            @foreach ($products as $product)
-                @if ($product->image && file_exists(storage_path('app/public/' . $product->image)))
-                    <div class="modal fade" id="fotoModal{{ $product->id }}" tabindex="-1" aria-labelledby="fotoLabel{{ $product->id }}" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content bg-transparent border-0 shadow-none">
-                                <div class="modal-body text-center position-relative">
-                                    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
-                                    <img src="{{ asset('storage/' . $product->image) }}"
-                                         class="img-fluid rounded shadow-lg"
-                                         alt="Foto Produk">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @endforeach
         @empty
             <div class="bg-white shadow-md rounded-xl border p-6 text-center text-gray-500">
                 Belum ada produk yang disetujui.
@@ -124,4 +156,23 @@
             {{ $users->links('pagination::tailwind') }}
         </div>
     </div>
+
+    <script>
+        function toggleRiwayat(id, btn) {
+            const row = document.getElementById('riwayat-' + id);
+            const isHidden = row.classList.contains('hidden');
+
+            document.querySelectorAll('[id^="riwayat-"]').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('button[data-open="true"]').forEach(b => {
+                b.innerText = '📦 Lihat Riwayat';
+                b.dataset.open = "false";
+            });
+
+            if (isHidden) {
+                row.classList.remove('hidden');
+                btn.innerText = '⬆️ Tutup Riwayat';
+                btn.dataset.open = "true";
+            }
+        }
+    </script>
 </x-app-layout>

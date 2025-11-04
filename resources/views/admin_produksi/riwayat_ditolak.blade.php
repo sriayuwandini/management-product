@@ -15,15 +15,16 @@
                 $products = $user->products;
             @endphp
 
+
             <div class="bg-white shadow-md rounded-xl border mb-6">
-                <div class="flex justify-between items-center p-4 border-b bg-gray-50">
+                <div class="flex justify-between items-center p-4 border-b bg-red-50">
                     <div>
                         <h6 class="font-semibold text-gray-800">👤 {{ $user->name }}</h6>
                         <p class="text-xs text-gray-500">
-                            Jumlah produk: {{ $products->count() }}
+                            Jumlah produk ditolak: {{ $products->count() }}
                         </p>
                     </div>
-                    <button class="px-3 py-2 text-sm bg-red-100 hover:bg-red-200 rounded-lg text-red-600 font-medium"
+                    <button class="px-3 py-2 text-sm bg-red-100 hover:bg-red-200 rounded-lg text-red-700 font-medium"
                         data-bs-toggle="modal"
                         data-bs-target="#modalDitolak{{ $user->id }}">
                         🔍 Lihat Detail
@@ -88,7 +89,6 @@
                         </div>
                         <div class="modal-footer justify-content-between">
                             <span class="text-muted small">Total Produk: {{ $products->count() }}</span>
-                            <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                         </div>
                     </div>
                 </div>

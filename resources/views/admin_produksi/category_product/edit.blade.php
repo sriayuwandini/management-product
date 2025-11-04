@@ -1,11 +1,18 @@
 <x-app-layout>
-
     <div class="py-10">
         <div class="max-w-2xl mx-auto sm:px-6 lg:px-8">
             @if(session('success'))
-                <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-800 rounded-lg">
-                    {{ session('success') }}
-                </div>
+                <script>
+                    document.addEventListener("DOMContentLoaded", () => {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: '{{ session('success') }}',
+                            confirmButtonColor: '#3085d6',
+                            confirmButtonText: 'OK'
+                        });
+                    });
+                </script>
             @endif
 
             <div class="bg-white shadow-xl sm:rounded-lg p-6">
@@ -14,7 +21,7 @@
                     <i class="bi bi-arrow-left mr-1"></i> Kembali
                 </a>
 
-                <form action="{{ route('categories.update', $category->id) }}" method="POST" class="space-y-6 mt-4">
+                <form id="updateForm" action="{{ route('categories.update', $category->id) }}" method="POST" class="space-y-6 mt-4">
                     @csrf
                     @method('PUT')
 
@@ -38,5 +45,40 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById('updateForm');
 
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('nama_kategori').value.trim();
+
+                const result = await Swal.fire({
+                    title: 'Simpan Perubahan?',
+                    text: `Kategori akan diperbarui menjadi "${name}".`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, simpan',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33'
+                });
+
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        html: 'Harap tunggu sebentar.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    setTimeout(() => {
+                        form.submit();
+                    }, 800);
+                }
+            });
+        });
+    </script>
 </x-app-layout>

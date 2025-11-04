@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Product;
+use App\Models\StockLog;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
@@ -26,13 +26,12 @@ class ProductController extends Controller
             }
 
             foreach ($data['products'] as $index => $product) {
-
                 $imagePath = null;
                 if ($request->hasFile("products.$index.image")) {
                     $imagePath = $request->file("products.$index.image")->store('products', 'public');
                 }
 
-                \App\Models\Product::create([
+                $newProduct = Product::create([
                     'user_id' => Auth::id(),
                     'name' => $product['name'] ?? '',
                     'category_id' => $product['category_id'] ?? null,
@@ -41,6 +40,14 @@ class ProductController extends Controller
                     'stock' => $product['stock'] ?? 0,
                     'image' => $imagePath,
                     'status' => 'pending',
+                ]);
+
+                StockLog::create([
+                    'product_id' => $newProduct->id,
+                    'user_id' => Auth::id(),
+                    'quantity' => $product['stock'] ?? 0,
+                    'type' => 'addition',
+                    'description' => 'Pengajuan awal produk konsinyasi',
                 ]);
             }
 
@@ -51,12 +58,19 @@ class ProductController extends Controller
         }
     }
 
-
     public function history()
     {
         $products = Product::where('user_id', Auth::id())
             ->orderBy('created_at', 'desc')
             ->paginate(10);
+
+        foreach ($products as $product) {
+            $latestLog = StockLog::where('product_id', $product->id)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $product->final_stock = $latestLog->quantity ?? $product->stock;
+        }
 
         return view('user.konsinyasi.history', compact('products'));
     }
@@ -67,15 +81,27 @@ class ProductController extends Controller
             return back()->with('error', '❌ Anda tidak berhak mengajukan kembali produk ini.');
         }
 
-        Product::create([
+        $lastStock = StockLog::where('product_id', $product->id)
+            ->orderBy('created_at', 'desc')
+            ->value('quantity') ?? $product->stock;
+
+        $newProduct = Product::create([
             'user_id' => Auth::id(),
             'name' => $product->name,
             'category_id' => $product->category_id,
             'description' => $product->description,
             'price' => $product->price,
-            'stock' => $product->stock,
+            'stock' => $lastStock,
             'image' => $product->image,
             'status' => 'pending',
+        ]);
+
+        StockLog::create([
+            'product_id' => $newProduct->id,
+            'user_id' => Auth::id(),
+            'quantity' => $lastStock,
+            'type' => 'addition',
+            'description' => 'Pengajuan ulang produk konsinyasi',
         ]);
 
         return back()->with('success', '✅ Produk berhasil diajukan kembali!');
@@ -89,9 +115,14 @@ class ProductController extends Controller
 
         $product->delete();
 
+        StockLog::create([
+            'product_id' => $product->id,
+            'user_id' => Auth::id(),
+            'quantity' => 0,
+            'type' => 'reduction', 
+            'description' => 'Pengajuan produk dibatalkan',
+        ]);
+
         return back()->with('success', '✅ Pengajuan produk berhasil dibatalkan.');
     }
-
-
-
 }

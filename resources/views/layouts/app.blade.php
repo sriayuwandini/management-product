@@ -6,6 +6,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ config('app.name', 'Laravel') }}</title>
 
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
@@ -13,14 +14,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
         /* Sidebar */
         .sidebar {
             width: 240px;
-            background-color: #1f2937; 
+            background-color: #1f2937;
             color: white;
             min-height: 100vh;
             position: fixed;
@@ -34,6 +34,7 @@
             color: white;
             border-radius: 0.5rem;
             text-decoration: none;
+            transition: background 0.2s ease;
         }
         .sidebar a:hover,
         .sidebar a.active {
@@ -56,7 +57,6 @@
             }
         }
 
-        /* Dropdown Menu */
         .dropdown {
             position: relative;
         }
@@ -102,9 +102,9 @@
 
 <body class="font-sans antialiased bg-gray-100">
     <div class="flex">
-
+        <!-- Sidebar -->
         <aside class="sidebar p-4">
-           <div>
+            <div>
                 <div class="mb-6 text-center">
                     <h2 class="text-xl font-bold text-white">Manajemen Produk</h2>
                     <hr class="my-3 border-gray-600">
@@ -138,13 +138,14 @@
 
                     {{-- ADMIN PRODUKSI --}}
                     @if(Auth::user()->hasRole('admin_produksi'))
-                        <a href="{{ route('admin.konsinyasi.index') }}">🧾 Konfirmasi Pengajuan</a>
+                        <a href="{{ route('admin.konsinyasi.index') }}">🧾 Validasi</a>
+                        <a href="{{ route('categories.index') }}">📂 Kategori</a>
                     @endif
 
                     {{-- USER --}}
                     @if(Auth::user()->hasRole('user'))
-                        <a href="{{ route('consignments.create') }}">📦 Ajukan Barang</a>
-                        <a href="{{ route('consignments.history') }}">📜 Riwayat Pengajuan</a>
+                        <a href="{{ route('consignments.create') }}">📦 Ajukan</a>
+                        <a href="{{ route('consignments.history') }}">📜 Riwayat</a>
                     @endif
 
                     {{-- SALES --}}
@@ -155,9 +156,11 @@
                 </nav>
             </div>
 
+            <!-- User Dropdown -->
             <div class="mt-auto pt-6 border-t border-gray-700">
                 <div class="dropdown" id="roleDropdown">
-                    <button type="button" class="w-full flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
+                    <button type="button"
+                            class="w-full flex justify-between items-center px-3 py-2 bg-gray-700 rounded hover:bg-gray-600">
                         <span>{{ Auth::user()->name }}</span>
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none"
                              viewBox="0 0 24 24" stroke="currentColor">
@@ -170,15 +173,18 @@
                         <a href="{{ route('profile.edit') }}" 
                            class="{{ request()->routeIs('profile.edit') ? 'active' : '' }}">🧑‍💼 Profile</a>
                         <a href="#">⚙️ Setting</a>
-                        <form method="POST" action="{{ route('logout') }}">
+
+                        <!-- Logout -->
+                        <form id="logoutForm" method="POST" action="{{ route('logout') }}">
                             @csrf
-                            <button type="submit">🚪 Logout</button>
+                            <button type="button" id="logoutButton">🚪 Logout</button>
                         </form>
                     </div>
                 </div>
             </div>
         </aside>
 
+        <!-- Main Content -->
         <div class="main-content flex-1">
             @isset($header)
                 <header class="bg-white shadow mb-6 rounded-lg">
@@ -194,14 +200,48 @@
         </div>
     </div>
 
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Dropdown toggle
             const dropdown = document.getElementById("roleDropdown");
             if (dropdown) {
                 dropdown.querySelector("button").addEventListener("click", () => {
                     dropdown.classList.toggle("open");
                 });
             }
+
+            // SweetAlert2 Logout
+            const logoutButton = document.getElementById('logoutButton');
+            const logoutForm = document.getElementById('logoutForm');
+
+            logoutButton.addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Apakah kamu yakin?',
+                    text: 'Apakah kamu serius ingin logout?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33',
+                    confirmButtonText: 'Ya, logout',
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: 'Keluar...',
+                            text: 'Sedang memproses logout.',
+                            allowOutsideClick: false,
+                            didOpen: () => Swal.showLoading()
+                        });
+
+                        setTimeout(() => {
+                            logoutForm.submit();
+                        }, 800);
+                    }
+                });
+            });
         });
     </script>
 </body>
