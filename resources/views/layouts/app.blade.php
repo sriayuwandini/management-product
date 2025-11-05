@@ -149,7 +149,8 @@
 
                     {{-- SALES --}}
                     @if(Auth::user()->hasRole('sales'))
-                        <a href="{{ route('sales.index') }}">🛍️ Produk</a>
+                        <a href="{{ route('sales.products.index') }}" :active="request()->routeIs('sales.products.index')">📝 Daftar Produk</a>
+                        <a href="{{ route('sales.index') }}">🛍️ Daftar Penjualan</a>
                         <a href="{{ route('sales.reports.index') }}">📊 Laporan Penjualan</a>
                     @endif
                 </nav>

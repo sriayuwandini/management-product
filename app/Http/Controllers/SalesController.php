@@ -6,6 +6,8 @@ use App\Models\Sales;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
+
 
 class SalesController extends Controller
 {
@@ -17,7 +19,12 @@ class SalesController extends Controller
         $sales = Sales::with('product')
             ->where('user_id', Auth::id())
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->through(function ($sale) {
+                $sale->formatted_date = Carbon::parse($sale->created_at)
+                    ->format('d M Y H:i'); // contoh: 03 Nov 2025 19:30
+                return $sale;
+            });
 
         return view('sales.index', compact('sales'));
     }
@@ -41,21 +48,26 @@ class SalesController extends Controller
             'quantity'   => 'required|integer|min:1',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = \App\Models\Product::findOrFail($request->product_id);
 
-        $total = $request->quantity * $product->price;
+        if ($product->stock < $request->quantity) {
+            return back()->with('error', 'Stok produk tidak mencukupi.');
+        }
+
+        $total = $product->price * $request->quantity;
 
         Sales::create([
             'user_id'     => Auth::id(),
             'product_id'  => $product->id,
             'quantity'    => $request->quantity,
-            'price'       => $product->price, // ambil dari tabel product
+            'price'       => $product->price,
             'total_price' => $total,
-            'status'      => 'pending',
         ]);
 
-        return redirect()->route('sales.index')
-            ->with('success', 'Penjualan berhasil ditambahkan dan menunggu persetujuan admin.');
+        // Kurangi stok produk
+        $product->decrement('stock', $request->quantity);
+
+        return redirect()->route('sales.index')->with('success', 'Penjualan berhasil ditambahkan dan stok diperbarui!');
     }
 
 
@@ -88,38 +100,17 @@ class SalesController extends Controller
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'quantity'   => 'required|integer|min:1',
-            'price'      => 'required|numeric|min:0',
-            'status'     => 'required|in:pending,approved,rejected,completed',
         ]);
 
         $product = Product::findOrFail($request->product_id);
+        $price = $product->price;
+        $total = $price * $request->quantity;
 
-        // Jika status diubah ke 'approved' dan sebelumnya bukan 'approved'
-        if ($request->status === 'approved' && $sale->status !== 'approved') {
-
-            // Cek stok cukup atau tidak
-            if ($product->stock < $request->quantity) {
-                return back()->withErrors(['quantity' => 'Stok produk tidak mencukupi.']);
-            }
-
-            // Kurangi stok
-            $product->stock -= $request->quantity;
-            $product->save();
-        }
-
-        // Jika status diubah dari 'approved' ke 'rejected', kembalikan stok
-        if ($sale->status === 'approved' && $request->status === 'rejected') {
-            $product->stock += $sale->quantity;
-            $product->save();
-        }
-
-        // Update data penjualan
         $sale->update([
-            'product_id'  => $request->product_id,
+            'product_id'  => $product->id,
             'quantity'    => $request->quantity,
-            'price'       => $product->price,
-            'total_price' => $request->quantity * $product->price,
-            'status'      => $request->status,
+            'price'       => $price,
+            'total_price' => $total,
         ]);
 
         return redirect()->route('sales.index')->with('success', 'Data penjualan berhasil diperbarui.');
@@ -146,4 +137,5 @@ class SalesController extends Controller
             abort(403, 'Anda tidak memiliki izin untuk mengakses data ini.');
         }
     }
+
 }

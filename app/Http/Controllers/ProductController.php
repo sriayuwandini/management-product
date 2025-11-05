@@ -92,6 +92,13 @@ class ProductController extends Controller
         return back()->with('success', '✅ Pengajuan produk berhasil dibatalkan.');
     }
 
+    public function salesIndex()
+    {
+        $products = Product::where('stock', '>', 0)
+        ->orderBy('name', 'asc')
+        ->paginate(10);
 
+    return view('sales.products', compact('products'));
+    }
 
 }

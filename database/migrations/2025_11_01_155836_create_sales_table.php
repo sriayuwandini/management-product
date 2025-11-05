@@ -28,9 +28,6 @@ return new class extends Migration
 
             $table->decimal('total_price', 12, 2);
 
-            $table->enum('status', ['pending', 'approved', 'rejected', 'completed'])
-                  ->default('pending');
-
             $table->timestamps();
         });
     }

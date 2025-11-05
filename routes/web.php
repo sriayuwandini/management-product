@@ -60,6 +60,8 @@ Route::middleware(['auth', 'verified', 'role:admin_penjualan'])->group(function 
 Route::middleware(['auth', 'verified', 'role:sales'])->group(function () {
     Route::get('/sales/reports', [SalesReportController::class, 'index'])->name('sales.reports.index');
     Route::get('/sales/reports/pdf', [SalesReportController::class, 'exportPdf'])->name('sales.reports.pdf');
+
+    Route::get('/sales/products', [ProductController::class, 'salesIndex'])->name('sales.products.index');
     Route::resource('sales', SalesController::class);
    });
 

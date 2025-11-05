@@ -39,16 +39,6 @@
                         <p class="text-gray-600 text-sm">Tanggal Penjualan</p>
                         <p class="text-lg font-semibold text-gray-800">{{ $sale->created_at->format('d M Y, H:i') }}</p>
                     </div>
-
-                    <div>
-                        <p class="text-gray-600 text-sm">Status</p>
-                        <span class="px-2 py-1 text-sm rounded-full
-                            @if ($sale->status === 'approved') bg-green-100 text-green-700
-                            @elseif ($sale->status === 'rejected') bg-red-100 text-red-700
-                            @else bg-yellow-100 text-yellow-700 @endif">
-                            {{ ucfirst($sale->status) }}
-                        </span>
-                    </div>
                 </div>
 
                 <div class="mt-6 flex justify-end">

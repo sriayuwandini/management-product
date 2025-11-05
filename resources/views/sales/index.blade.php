@@ -25,7 +25,7 @@
                             <th class="px-6 py-3">Jumlah</th>
                             <th class="px-6 py-3">Harga</th>
                             <th class="px-6 py-3">Total</th>
-                            <th class="px-6 py-3">Status</th>
+                            <th class="px-4 py-2 text-left">Tanggal & Jam</th>
                             <th class="px-6 py-3 text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -40,13 +40,8 @@
                                 <td class="px-6 py-3 font-semibold text-gray-800">
                                     Rp {{ number_format($sale->total_price, 0, ',', '.') }}
                                 </td>
-                                <td class="px-6 py-3">
-                                    <span class="px-2 py-1 text-xs rounded-full
-                                        @if ($sale->status === 'approved') bg-green-100 text-green-700
-                                        @elseif ($sale->status === 'rejected') bg-red-100 text-red-700
-                                        @else bg-yellow-100 text-yellow-700 @endif">
-                                        {{ ucfirst($sale->status) }}
-                                    </span>
+                                <td class="px-4 py-2 text-gray-600">
+                                    {{ $sale->formatted_date ?? $sale->created_at->format('d M Y H:i') }}
                                 </td>
                                 <td class="px-6 py-3 text-center space-x-2">
                                     <a href="{{ route('sales.edit', $sale->id) }}"

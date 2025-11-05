@@ -23,7 +23,6 @@
                 <th>Jumlah</th>
                 <th>Harga</th>
                 <th>Total</th>
-                <th>Status</th>
                 <th>Tanggal</th>
             </tr>
         </thead>
@@ -35,7 +34,6 @@
                     <td>{{ $sale->quantity }}</td>
                     <td>Rp {{ number_format($sale->price, 0, ',', '.') }}</td>
                     <td>Rp {{ number_format($sale->total_price, 0, ',', '.') }}</td>
-                    <td>{{ ucfirst($sale->status) }}</td>
                     <td>{{ $sale->created_at->format('d M Y') }}</td>
                 </tr>
             @endforeach
@@ -44,7 +42,6 @@
 
     <div class="summary">
         <p><strong>Total Penjualan:</strong> Rp {{ number_format($totalPenjualan, 0, ',', '.') }}</p>
-        <p><strong>Transaksi Disetujui:</strong> {{ $approvedSales }}</p>
         <p><strong>Total Transaksi:</strong> {{ $sales->count() }}</p>
     </div>
 </body>
