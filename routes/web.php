@@ -8,6 +8,7 @@ use App\Http\Controllers\{
     OwnerController,
     AdminProduksiController,
     AdminPenjualanController,
+    DaftarProdukController,
     CategoryController,
     SalesController,
     SalesReportController,
@@ -28,6 +29,12 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:owner'])->group(function () {
     Route::get('/owner/dashboard', [OwnerController::class, 'index'])->name('dashboard'); 
     Route::resource('users', UserController::class);
+
+    //prduk
+    Route::get('/owner/daftar/produk', [DaftarProdukController::class, 'index'])->name('owner.produk.index');
+    Route::post('/owner/daftar/produk/store', [DaftarProdukController::class, 'store'])->name('owner.produk.store');
+    Route::put('/owner/daftar/produk/update/{produk}', [DaftarProdukController::class, 'update'])->name('owner.produk.update');
+    Route::delete('/owner/daftar/produk/destroy/{produk}', [DaftarProdukController::class, 'destroy'])->name('owner.produk.destroy');
 });
 
 // ADMIN PRODUKSI
@@ -42,13 +49,6 @@ Route::middleware(['auth', 'verified', 'role:admin_produksi'])->group(function (
     Route::get('/admin/produksi/riwayat-disetujui', [AdminProduksiController::class, 'riwayatDisetujui'])->name('admin.konsinyasi.riwayat.disetujui');
     Route::get('/admin/produksi/riwayat-ditolak', [AdminProduksiController::class, 'riwayatDitolak'])->name('admin.konsinyasi.riwayat.ditolak');
 
-    //kategori prodk
-    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
-    Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
-    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
-    Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
-    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
-    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });
 
 // ADMIN PENJUALAN
@@ -68,6 +68,17 @@ Route::middleware(['auth', 'verified', 'role:sales'])->group(function () {
 Route::middleware(['auth', 'verified', 'role:user'])->group(function () {
     Route::get('/user/dashboard', [UserDashboardController::class, 'index'])->name('user.dashboard');
 
+});
+
+//owner dan admin produksi
+Route::middleware(['auth', 'verified', 'role:owner|admin_produksi'])->group(function () {
+    //kategori prodk
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/create', [CategoryController::class, 'create'])->name('categories.create');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::get('/categories/{category}/edit', [CategoryController::class, 'edit'])->name('categories.edit');
+    Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });
 
 // USER

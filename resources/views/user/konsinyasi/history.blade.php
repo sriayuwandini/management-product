@@ -46,9 +46,8 @@
                         <thead class="bg-gray-100 border-b border-gray-200">
                             <tr>
                                 <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">No</th>
+                                <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Kode Produk</th>
                                 <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Nama Produk</th>
-                                <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Kategori</th>
-                                <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Harga</th>
                                 <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Stok</th>
                                 <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Status</th>
                                 <th class="px-6 py-3 font-semibold uppercase text-xs tracking-wider">Tanggal Diajukan</th>
@@ -64,16 +63,13 @@
                                         'pending'  => 'Menunggu',
                                     ];
                                     $statusLabel = $statusMap[$product->status] ?? ucfirst($product->status);
+                                    $dp = $product->daftarProduk;
                                 @endphp
-
                                 <tr class="border-b hover:bg-gray-50 transition">
                                     <td class="px-6 py-3 text-gray-900">{{ $products->firstItem() + $index }}</td>
-                                    <td class="px-6 py-3 font-medium text-gray-900">{{ $product->name }}</td>
-                                    <td class="px-6 py-3">{{ $product->category->nama_kategori ?? '-' }}</td>
-                                    <td class="px-6 py-3">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                                    <td class="px-6 py-3">
-                                        {{ $product->latestStockLog->quantity ?? $product->stock }}
-                                    </td>
+                                    <td class="px-6 py-3 font-medium text-gray-900">{{ $dp->kode_produk ?? '-' }}</td>
+                                    <td class="px-6 py-3 font-medium text-gray-900">{{ $dp->nama_produk ?? '-' }}</td>
+                                    <td class="px-6 py-3">{{ $product->final_stock ?? $product->stock }}</td>
                                     <td class="px-6 py-3">
                                         @if($product->status == 'pending')
                                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu</span>
@@ -83,16 +79,17 @@
                                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-700">Ditolak</span>
                                         @endif
                                     </td>
-                                    <td class="px-6 py-3 text-gray-600">{{ $product->created_at->format('d M Y') }}</td>
+                                    <td class="px-6 py-3 text-gray-600">{{ $product->created_at->format('d M Y H:i') }}</td>
                                     <td class="px-6 py-3 text-center">
                                         <button data-modal-target="detailModal" data-modal-toggle="detailModal"
                                             data-id="{{ $product->id }}"
-                                            data-name="{{ $product->name }}"
-                                            data-category="{{ $product->category->nama_kategori ?? '-' }}"
-                                            data-description="{{ $product->description }}"
-                                            data-price="Rp {{ number_format($product->price, 0, ',', '.') }}"
-                                            data-stock="{{ $product->stock }}"
-                                            data-image="{{ $product->image ? asset('storage/products/'.$product->image) : '' }}"
+                                            data-name="{{ $dp->nama_produk ?? '-' }}"
+                                            data-kode="{{ $dp->kode_produk ?? '-' }}"
+                                            data-category="{{ $dp->category->nama_kategori ?? '-' }}"
+                                            data-description="{{ $dp->deskripsi ?? '-' }}"
+                                            data-price="Rp {{ number_format($dp->harga ?? 0, 0, ',', '.') }}"
+                                            data-stock="{{ $product->final_stock ?? $product->stock }}"
+                                            data-image="{{ $dp->foto ? asset('storage/products/'.$dp->foto) : asset('storage/no-image.png') }}"
                                             data-status="{{ $statusLabel }}"
                                             data-created="{{ $product->created_at->format('d M Y H:i') }}"
                                             data-updated="{{ $product->updated_at->format('d M Y H:i') }}"
@@ -105,7 +102,6 @@
                         </tbody>
                     </table>
                 </div>
-
                 <div class="p-4 bg-gray-50 border-t border-gray-200">
                     {{ $products->appends(request()->except('page'))->links('pagination::tailwind') }}
                 </div>
@@ -120,7 +116,6 @@
                 <h5 class="text-lg font-semibold text-gray-700">📝 Detail Produk Konsinyasi</h5>
                 <button type="button" class="text-gray-500 hover:text-gray-700" data-modal-hide="detailModal">&times;</button>
             </div>
-
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="flex justify-center">
                     <img id="detailImage" src="{{ asset('storage/no-image.png') }}" 
@@ -130,6 +125,7 @@
                     <table class="w-full text-sm text-gray-700 border border-gray-200 rounded-lg">
                         <tbody>
                             <tr><td class="p-2 font-medium w-1/3">Nama Produk</td><td class="p-2" id="detailName"></td></tr>
+                            <tr><td class="p-2 font-medium w-1/3">Kode Produk</td><td class="p-2" id="detailKode"></td></tr>
                             <tr><td class="p-2 font-medium">Kategori</td><td class="p-2" id="detailCategory"></td></tr>
                             <tr><td class="p-2 font-medium">Harga</td><td class="p-2" id="detailPrice"></td></tr>
                             <tr><td class="p-2 font-medium">Stok</td><td class="p-2" id="detailStock"></td></tr>
@@ -149,7 +145,6 @@
                         data-modal-hide="detailModal">
                     Tutup
                 </button>
-
                 <form id="actionForm" method="POST" class="inline">
                     @csrf
                     <button type="submit"
@@ -163,33 +158,29 @@
     </div>
 
     <script>
+        const modal = document.getElementById("detailModal");
+        const body = document.body;
+
         document.querySelectorAll('[data-modal-toggle="detailModal"]').forEach(button => {
-            button.addEventListener('click', () => {
-                const modal = document.getElementById('detailModal');
-                modal.classList.remove('hidden');
+            button.addEventListener("click", () => {
+                modal.classList.remove("hidden");
+                body.classList.add("overflow-hidden");
 
-                const img = modal.querySelector('#detailImage');
-                img.src = button.dataset.image || "{{ asset('storage/no-image.png') }}";
-
+                modal.querySelector('#detailImage').src = button.dataset.image || "{{ asset('storage/no-image.png') }}";
+                modal.querySelector('#detailKode').innerText = button.dataset.kode;
                 modal.querySelector('#detailName').innerText = button.dataset.name;
                 modal.querySelector('#detailCategory').innerText = button.dataset.category;
-                modal.querySelector('#detailDescription').innerText = button.dataset.description || '-';
+                modal.querySelector('#detailDescription').innerText = button.dataset.description || "-";
                 modal.querySelector('#detailPrice').innerText = button.dataset.price;
                 modal.querySelector('#detailStock').innerText = button.dataset.stock;
 
+                const statusLabel = button.dataset.status.toLowerCase();
                 const statusEl = modal.querySelector('#detailStatus');
-                const status = button.dataset.status.toLowerCase();
-
                 statusEl.innerText = button.dataset.status;
-                statusEl.classList.remove('text-yellow-700', 'text-green-700', 'text-red-700');
-
-                if (status.includes('menunggu')) {
-                    statusEl.classList.add('text-yellow-700');
-                } else if (status.includes('disetujui')) {
-                    statusEl.classList.add('text-green-700');
-                } else {
-                    statusEl.classList.add('text-red-700');
-                }
+                statusEl.classList.remove("text-yellow-700","text-green-700","text-red-700");
+                if (statusLabel.includes("menunggu")) statusEl.classList.add("text-yellow-700");
+                else if (statusLabel.includes("disetujui")) statusEl.classList.add("text-green-700");
+                else statusEl.classList.add("text-red-700");
 
                 modal.querySelector('#detailCreated').innerText = button.dataset.created;
                 modal.querySelector('#detailUpdated').innerText = button.dataset.updated;
@@ -197,59 +188,42 @@
                 const actionForm = modal.querySelector('#actionForm');
                 const actionButton = modal.querySelector('#actionButton');
 
-                if (status.includes('menunggu')) {
+                if (statusLabel.includes("menunggu")) {
                     actionForm.action = `/products/${button.dataset.id}/cancel`;
-                    actionButton.innerText = '❌ Batal Pengajuan';
-                    actionButton.classList.remove('bg-green-100','text-green-700','hover:bg-green-200');
-                    actionButton.classList.add('bg-red-100','text-red-700','hover:bg-red-200');
+                    actionButton.innerText = "❌ Batal Pengajuan";
+                    actionButton.className = "bg-red-100 hover:bg-red-200 text-red-700 font-medium py-2 px-4 rounded-md text-sm";
                 } else {
                     actionForm.action = `/products/${button.dataset.id}/resubmit`;
-                    actionButton.innerText = '🔄 Ajukan Kembali';
-                    actionButton.classList.remove('bg-red-100','text-red-700','hover:bg-red-200');
-                    actionButton.classList.add('bg-green-100','text-green-700','hover:bg-green-200');
+                    actionButton.innerText = "🔄 Ajukan Kembali";
+                    actionButton.className = "bg-green-100 hover:bg-green-200 text-green-700 font-medium py-2 px-4 rounded-md text-sm";
                 }
 
                 actionForm.onsubmit = async (e) => {
                     e.preventDefault();
-                    const isCancel = status.includes('menunggu');
-
+                    const isCancel = statusLabel.includes("menunggu");
                     const result = await Swal.fire({
-                        title: isCancel ? 'Batalkan pengajuan ini?' : 'Ajukan kembali produk ini?',
-                        text: isCancel
-                            ? 'Produk akan dibatalkan dari daftar pengajuan.'
-                            : 'Produk akan diajukan kembali ke admin.',
-                        icon: 'question',
+                        title: isCancel ? "Batalkan pengajuan ini?" : "Ajukan kembali produk ini?",
+                        text: isCancel ? "Produk akan dibatalkan dari daftar pengajuan." : "Produk akan diajukan kembali ke admin.",
+                        icon: "question",
                         showCancelButton: true,
-                        confirmButtonText: isCancel ? 'Ya, batalkan' : 'Ya, ajukan',
-                        cancelButtonText: 'Batal',
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33'
+                        confirmButtonText: isCancel ? "Ya, batalkan" : "Ya, ajukan",
+                        cancelButtonText: "Batal"
                     });
-
                     if (result.isConfirmed) {
                         Swal.fire({
-                            title: isCancel ? 'Membatalkan pengajuan...' : 'Mengajukan kembali produk...',
-                            html: 'Harap tunggu sebentar.',
-                            allowOutsideClick: false,
-                            didOpen: () => {
-                                Swal.showLoading();
-                            }
+                            title: isCancel ? "Membatalkan..." : "Mengajukan...",
+                            allowOutsideClick:false,
+                            didOpen:()=>Swal.showLoading()
                         });
-
-                        setTimeout(() => {
-                            actionForm.submit();
-                        }, 800);
+                        setTimeout(() => actionForm.submit(), 600);
                     }
                 };
             });
         });
 
-        document.querySelectorAll('[data-modal-hide="detailModal"]').forEach(button => {
-            button.addEventListener('click', () => {
-                document.getElementById('detailModal').classList.add('hidden');
-            });
-        });
-
+        document.querySelectorAll('[data-modal-hide="detailModal"]').forEach(btn => btn.addEventListener("click", closeModal));
+        modal.addEventListener("click", e => { if(e.target===modal) closeModal(); });
+        function closeModal() { modal.classList.add("hidden"); body.classList.remove("overflow-hidden"); }
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

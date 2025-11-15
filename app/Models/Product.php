@@ -8,12 +8,8 @@ class Product extends Model
 {
 protected $fillable = [
     'user_id',
-    'name',
-    'category_id',
-    'description',
-    'price',
+    'daftar_produks_id',
     'stock',
-    'image',
     'status',
 ];
 
@@ -41,4 +37,10 @@ protected $fillable = [
     {
         return $this->hasOne(\App\Models\StockLog::class)->latestOfMany();
     }
+
+    public function daftarProduk()
+    {
+        return $this->belongsTo(DaftarProduk::class, 'daftar_produks_id');
+    }
+
 }

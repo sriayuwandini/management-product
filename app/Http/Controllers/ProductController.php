@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DaftarProduk;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\StockLog;
@@ -10,53 +11,56 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    public function create()
-    {
-        $categories = \App\Models\Category::orderBy('nama_kategori')->get();
-        return view('user.konsinyasi.index', compact('categories'));
-    }
+    public function create(Request $request)
+        {
+            $categories = \App\Models\Category::orderBy('nama_kategori')->get();
+
+            $query = DaftarProduk::with('category')->orderBy('nama_produk');
+
+            if ($request->has('q') && $request->q != '') {
+                $search = $request->q;
+                $query->where(function ($q) use ($search) {
+                    $q->where('nama_produk', 'like', "%{$search}%")
+                    ->orWhere('kode_produk', 'like', "%{$search}%");
+                });
+            }
+
+            $daftarProduks = $query->paginate(10)->appends($request->except('page'));
+
+            return view('user.konsinyasi.index', compact('categories', 'daftarProduks'));
+        }
+
 
     public function submit(Request $request)
     {
         try {
-            $data = $request->all();
-
-            if (empty($data['products'])) {
-                return back()->with('error', '❌ Data produk kosong atau tidak terkirim ke server.');
+            if (!$request->has('products') || empty($request->products)) {
+                return back()->with('error', '❌ Gagal menyimpan: data produk tidak terkirim!');
             }
 
-            foreach ($data['products'] as $index => $product) {
-                $imagePath = null;
-                if ($request->hasFile("products.$index.image")) {
-                    $imagePath = $request->file("products.$index.image")->store('products', 'public');
+            foreach ($request->products as $product) {
+                $dp = DaftarProduk::find($product['daftar_produks_id'] ?? null);
+
+                if (!$dp) {
+                    return back()->with('error', '❌ Produk tidak ditemukan di daftar_produks.');
                 }
 
-                $newProduct = Product::create([
+                Product::create([
                     'user_id' => Auth::id(),
-                    'name' => $product['name'] ?? '',
-                    'category_id' => $product['category_id'] ?? null,
-                    'description' => $product['description'] ?? '',
-                    'price' => $product['price'] ?? 0,
-                    'stock' => $product['stock'] ?? 0,
-                    'image' => $imagePath,
+                    'daftar_produks_id' => $dp->id,
+                    'stock' => $product['stock'] ?? 1, 
                     'status' => 'pending',
-                ]);
-
-                StockLog::create([
-                    'product_id' => $newProduct->id,
-                    'user_id' => Auth::id(),
-                    'quantity' => $product['stock'] ?? 0,
-                    'type' => 'addition',
-                    'description' => 'Pengajuan awal produk konsinyasi',
                 ]);
             }
 
             return redirect()->route('consignments.history')
-                ->with('success', '✅ Produk berhasil diajukan dan disimpan ke database!');
+                ->with('success', '✅ Produk berhasil diajukan!');
         } catch (\Throwable $e) {
             return back()->with('error', '❌ Gagal menyimpan: ' . $e->getMessage());
         }
     }
+
+
 
     public function history()
     {
@@ -75,6 +79,7 @@ class ProductController extends Controller
         return view('user.konsinyasi.history', compact('products'));
     }
 
+
     public function resubmit(Product $product)
     {
         if ($product->user_id !== Auth::id()) {
@@ -87,12 +92,8 @@ class ProductController extends Controller
 
         $newProduct = Product::create([
             'user_id' => Auth::id(),
-            'name' => $product->name,
-            'category_id' => $product->category_id,
-            'description' => $product->description,
-            'price' => $product->price,
+            'daftar_produks_id' => $product->daftar_produks_id, 
             'stock' => $lastStock,
-            'image' => $product->image,
             'status' => 'pending',
         ]);
 
@@ -107,13 +108,12 @@ class ProductController extends Controller
         return back()->with('success', '✅ Produk berhasil diajukan kembali!');
     }
 
+
     public function cancel(Product $product)
     {
         if ($product->user_id !== Auth::id()) {
             return back()->with('error', '❌ Anda tidak berhak membatalkan pengajuan ini.');
         }
-
-        $product->delete();
 
         StockLog::create([
             'product_id' => $product->id,
@@ -123,6 +123,9 @@ class ProductController extends Controller
             'description' => 'Pengajuan produk dibatalkan',
         ]);
 
+        $product->delete();
+
         return back()->with('success', '✅ Pengajuan produk berhasil dibatalkan.');
     }
+
 }

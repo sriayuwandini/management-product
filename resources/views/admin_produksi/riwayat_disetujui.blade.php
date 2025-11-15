@@ -46,31 +46,40 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
+                                            <th>Kode Produk</th>
                                             <th>Nama Produk</th>
                                             <th>Kategori</th>
                                             <th>Harga</th>
                                             <th>Stok</th>
                                             <th>Deskripsi</th>
                                             <th>Foto</th>
+                                            <th>Diajukan</th>
+                                            <th>Tanggal Ditolak</th>
                                             <th>Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($products as $product)
+                                            @php $dp = $product->daftarProduk; @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $product->name }}</td>
-                                                <td>{{ $product->category->nama_kategori ?? '-' }}</td>
-                                                <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
+                                                <td>{{ $dp->kode_produk ?? '-' }}</td>
+                                                <td>{{ $dp->nama_produk ?? '-' }}</td>
+                                                <td>{{ $dp->category->nama_kategori ?? '-' }}</td>
+                                                <td>Rp {{ number_format($dp->harga ?? 0, 0, ',', '.') }}</td>
                                                 <td>{{ $product->stock }}</td>
-                                                <td>{{ Str::limit($product->description, 60) }}</td>
+                                                <td>{{ Str::limit($dp->deskripsi ?? '-', 60) }}</td>
                                                 <td class="text-center">
-                                                    @if ($product->image && file_exists(storage_path('app/public/' . $product->image)))
-                                                        <img src="{{ asset('storage/' . $product->image) }}" alt="Foto Produk" class="w-14 h-14 object-cover rounded mx-auto shadow">
+                                                    @if ($dp->foto && file_exists(storage_path('app/public/' . $dp->foto)))
+                                                        <img src="{{ asset('storage/' . $dp->foto) }}" 
+                                                             alt="Foto Produk" 
+                                                             class="w-14 h-14 object-cover rounded mx-auto shadow">
                                                     @else
                                                         <span class="text-gray-400 text-xs">Tidak ada</span>
                                                     @endif
                                                 </td>
+                                                <td>{{ $product->created_at->format('d M Y H:i') }}</td>
+                                                <td>{{ $product->updated_at->format('d M Y H:i') }}</td>
                                                 <td class="text-center">
                                                     <button 
                                                         onclick="toggleRiwayat('{{ $product->id }}', this)"
@@ -80,16 +89,15 @@
                                                 </td>
                                             </tr>
 
-                                            {{-- Dropdown Riwayat --}}
                                             <tr id="riwayat-{{ $product->id }}" class="hidden bg-gray-50">
-                                                <td colspan="8" class="p-3">
+                                                <td colspan="10" class="p-3">
                                                     @php
                                                         $logs = \App\Models\StockLog::where('product_id', $product->id)
                                                             ->orderBy('created_at', 'desc')
                                                             ->get();
                                                     @endphp
                                                     <h6 class="font-semibold text-gray-700 mb-2">
-                                                        📜 Riwayat Stok — {{ $product->name }}
+                                                        📜 Riwayat Stok — {{ $dp->nama_produk ?? '-' }}
                                                     </h6>
                                                     @if ($logs->isEmpty())
                                                         <p class="text-gray-500 text-sm italic">Belum ada riwayat stok.</p>
