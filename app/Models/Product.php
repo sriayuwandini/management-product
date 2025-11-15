@@ -32,5 +32,13 @@ protected $fillable = [
         return $this->hasMany(Sales::class);
     }
 
+    public function stockLogs()
+    {
+        return $this->hasMany(StockLog::class);
+    }
 
+    public function latestStockLog()
+    {
+        return $this->hasOne(\App\Models\StockLog::class)->latestOfMany();
+    }
 }

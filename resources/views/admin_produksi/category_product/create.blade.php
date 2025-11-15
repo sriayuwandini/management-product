@@ -12,7 +12,7 @@
                         </a>
                     </div>
 
-                    <form action="{{ route('categories.store') }}" method="POST" class="space-y-4">
+                    <form id="tambahForm" action="{{ route('categories.store') }}" method="POST" class="space-y-4">
                         @csrf
 
                         <div>
@@ -33,4 +33,40 @@
             </div>
         </div>
     </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const form = document.getElementById('tambahForm');
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('nama_kategori').value.trim();
+
+                const result = await Swal.fire({
+                    title: 'Simpan Kategori?',
+                    text: `Kategori baru dengan nama "${name}" akan ditambahkan.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Ya, tambah',
+                    cancelButtonText: 'Batal',
+                    confirmButtonColor: '#3085d6',
+                    cancelButtonColor: '#d33'
+                });
+
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Menyimpan...',
+                        html: 'Harap tunggu sebentar.',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    setTimeout(() => {
+                        form.submit();
+                    }, 800);
+                }
+            });
+        });
+    </script>
 </x-app-layout>

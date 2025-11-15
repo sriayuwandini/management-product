@@ -2,15 +2,31 @@
     <div class="py-8 px-6 lg:px-12">
 
         @if(session('success'))
-            <div class="mb-4 p-4 bg-green-100 text-green-800 rounded-lg border border-green-300">
-                {{ session('success') }}
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Berhasil!",
+                        text: "{{ session('success') }}",
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                });
+            </script>
         @endif
 
         @if(session('error'))
-            <div class="mb-4 p-4 bg-red-100 text-red-800 rounded-lg border border-red-300">
-                {{ session('error') }}
-            </div>
+            <script>
+                document.addEventListener("DOMContentLoaded", function() {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Gagal!",
+                        text: "{{ session('error') }}",
+                        timer: 2500,
+                        showConfirmButton: false
+                    });
+                });
+            </script>
         @endif
 
         <div class="text-gray-500 py-2 bg-white rounded-xl shadow-md mb-4">
@@ -55,7 +71,9 @@
                                     <td class="px-6 py-3 font-medium text-gray-900">{{ $product->name }}</td>
                                     <td class="px-6 py-3">{{ $product->category->nama_kategori ?? '-' }}</td>
                                     <td class="px-6 py-3">Rp {{ number_format($product->price, 0, ',', '.') }}</td>
-                                    <td class="px-6 py-3">{{ $product->stock }}</td>
+                                    <td class="px-6 py-3">
+                                        {{ $product->latestStockLog->quantity ?? $product->stock }}
+                                    </td>
                                     <td class="px-6 py-3">
                                         @if($product->status == 'pending')
                                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">Menunggu</span>
@@ -190,6 +208,39 @@
                     actionButton.classList.remove('bg-red-100','text-red-700','hover:bg-red-200');
                     actionButton.classList.add('bg-green-100','text-green-700','hover:bg-green-200');
                 }
+
+                actionForm.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const isCancel = status.includes('menunggu');
+
+                    const result = await Swal.fire({
+                        title: isCancel ? 'Batalkan pengajuan ini?' : 'Ajukan kembali produk ini?',
+                        text: isCancel
+                            ? 'Produk akan dibatalkan dari daftar pengajuan.'
+                            : 'Produk akan diajukan kembali ke admin.',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: isCancel ? 'Ya, batalkan' : 'Ya, ajukan',
+                        cancelButtonText: 'Batal',
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33'
+                    });
+
+                    if (result.isConfirmed) {
+                        Swal.fire({
+                            title: isCancel ? 'Membatalkan pengajuan...' : 'Mengajukan kembali produk...',
+                            html: 'Harap tunggu sebentar.',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
+
+                        setTimeout(() => {
+                            actionForm.submit();
+                        }, 800);
+                    }
+                };
             });
         });
 
@@ -198,5 +249,8 @@
                 document.getElementById('detailModal').classList.add('hidden');
             });
         });
+
     </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </x-app-layout>
