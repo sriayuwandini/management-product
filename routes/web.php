@@ -13,6 +13,7 @@ use App\Http\Controllers\{
     SalesReportController,
     UserDashboardController
 };
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('welcome');
@@ -58,8 +59,8 @@ Route::middleware(['auth', 'verified', 'role:admin_penjualan'])->group(function 
 
 // SALES
 Route::middleware(['auth', 'verified', 'role:sales'])->group(function () {
-    Route::get('/sales/reports', [SalesReportController::class, 'index'])->name('sales.reports.index');
-    Route::get('/sales/reports/pdf', [SalesReportController::class, 'exportPdf'])->name('sales.reports.pdf');
+    // Route::get('/sales/dashboard', [SalesController::class, 'dashboard'])->name('dashboard');
+    Route::get('/sales/search-product', [SalesController::class, 'searchProduct'])->name('sales.searchProduct');
 
     Route::get('/sales/products', [ProductController::class, 'salesIndex'])->name('sales.products.index');
     Route::resource('sales', SalesController::class);
@@ -82,8 +83,6 @@ Route::middleware(['auth'])->group(function () {
     //ajukan kembaliii
     Route::post('/products/{product}/resubmit', [ProductController::class, 'resubmit'])->name('products.resubmit');
     Route::post('/products/{product}/cancel', [ProductController::class, 'cancel'])->name('products.cancel');
-
 });
-
 
 require __DIR__.'/auth.php';

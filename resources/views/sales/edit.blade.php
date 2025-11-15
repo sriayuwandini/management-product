@@ -1,75 +1,82 @@
 <x-app-layout>
-    <div class="py-10">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-
-            <div class="bg-white shadow-md rounded-lg p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Edit Penjualan</h2>
-                    <a href="{{ route('sales.index') }}"
-                       class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg shadow">
-                        Kembali
-                    </a>
+    <div class="py-10 bg-gray-50 min-h-screen">
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-xl rounded-2xl overflow-hidden">
+                
+                {{-- Header --}}
+                <div class="px-6 py-4 border-b bg-gradient-to-r from-indigo-600 to-indigo-700 text-gray">
+                    <h2 class="text-2xl font-bold">
+                        ✏️ Edit Penjualan <span class="opacity-90">#{{ $sale->invoice_number }}</span>
+                    </h2>
                 </div>
 
-                <form action="{{ route('sales.update', $sale->id) }}" method="POST" class="space-y-6">
+                <form action="{{ route('sales.update', $sale->id) }}" method="POST" class="p-6 space-y-6">
                     @csrf
                     @method('PUT')
 
-                    <div>
-                        <label for="product_id" class="block text-sm font-medium text-gray-700">Pilih Produk</label>
-                        <select id="product_id" name="product_id"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            required>
-                            @foreach ($products as $product)
-                                <option value="{{ $product->id }}" {{ $sale->product_id == $product->id ? 'selected' : '' }}>
-                                    {{ $product->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('product_id')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+                        <table class="w-full text-sm text-gray-700">
+                            <thead class="bg-indigo-100 text-gray-800 uppercase text-xs tracking-wide">
+                                <tr>
+                                    <th class="border px-4 py-3 text-left">Produk</th>
+                                    <th class="border px-4 py-3 text-center">Harga</th>
+                                    <th class="border px-4 py-3 text-center">Qty Order</th>
+                                    <th class="border px-4 py-3 text-center">Qty Delivery</th>
+                                    <th class="border px-4 py-3 text-center">Qty Sold</th>
+                                    <th class="border px-4 py-3 text-center">Subtotal</th>
+                                </tr>
+                            </thead>
+
+                            <tbody class="divide-y divide-gray-100">
+                                @foreach ($sale->details as $index => $detail)
+                                    <tr class="hover:bg-gray-50 transition">
+                                        <td class="px-4 py-3 font-medium text-gray-800">
+                                            {{ $detail->product->name }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            Rp{{ number_format($detail->price, 0, ',', '.') }}
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <input type="number" 
+                                                name="details[{{ $index }}][quantity_order]"
+                                                value="{{ $detail->quantity_order }}"
+                                                class="w-24 text-center border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <input type="number" 
+                                                name="details[{{ $index }}][quantity_delivery]"
+                                                value="{{ $detail->quantity_delivery }}"
+                                                class="w-24 text-center border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                        </td>
+                                        <td class="px-4 py-3 text-center">
+                                            <input type="number" 
+                                                name="details[{{ $index }}][quantity_sold]"
+                                                value="{{ $detail->quantity_sold }}"
+                                                class="w-24 text-center border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                                        </td>
+                                        <td class="px-4 py-3 text-center font-semibold text-indigo-700">
+                                            Rp{{ number_format($detail->subtotal, 0, ',', '.') }}
+                                        </td>
+                                        <input type="hidden" name="details[{{ $index }}][id]" value="{{ $detail->id }}">
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                        <input type="number" id="quantity" name="quantity" min="1"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value="{{ old('quantity', $sale->quantity) }}" required>
-                        @error('quantity')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="price" class="block text-sm font-medium text-gray-700">Harga per Unit</label>
-                        <input type="number" step="0.01" id="price" name="price"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                            value="{{ old('price', $sale->price) }}" required>
-                        @error('price')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                        <select id="status" name="status"
-                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                            <option value="pending" {{ $sale->status == 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="approved" {{ $sale->status == 'approved' ? 'selected' : '' }}>Approved</option>
-                            <option value="rejected" {{ $sale->status == 'rejected' ? 'selected' : '' }}>Rejected</option>
-                        </select>
-                    </div>
-
-                    <div class="flex justify-end">
+                    <div class="flex justify-end items-center space-x-3">
+                        <a href="{{ route('sales.index') }}"
+                           class="bg-gray-600 hover:bg-indigo-700 text-gray-800 px-5 py-2 rounded-lg shadow transition">
+                            ← Kembali
+                        </a>
                         <button type="submit"
-                            class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-gray font-medium rounded-lg shadow">
-                            Perbarui
+                            class="bg-gray-600 hover:bg-indigo-700 text-gray px-5 py-2 rounded-lg shadow transition">
+                            💾 Simpan Perubahan
                         </button>
                     </div>
                 </form>
-            </div>
 
+            </div>
         </div>
     </div>
 </x-app-layout>

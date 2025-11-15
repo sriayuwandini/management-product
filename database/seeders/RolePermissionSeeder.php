@@ -14,8 +14,7 @@ class RolePermissionSeeder extends Seeder
         $roles = [
             'owner',
             'user',
-            'admin produksi',
-            'admin penjualan',
+            'admin_produksi',
             'sales',
         ];
 
@@ -36,13 +35,8 @@ class RolePermissionSeeder extends Seeder
 
         Role::where('name', 'owner')->first()?->syncPermissions(Permission::all());
         Role::where('name', 'user')->first()?->syncPermissions(['view products']);
-        Role::where('name', 'admin produksi')->first()?->syncPermissions(['view products', 'create products', 'edit products']);
-        Role::where('name', 'admin penjualan')->first()?->syncPermissions(['view sales', 'create sales', 'edit sales']);
-        Role::where('name', 'sales')->first()?->syncPermissions(['view products', 'create sales']);
+        Role::where('name', 'admin_produksi')->first()?->syncPermissions(['view products', 'create products', 'edit products']);
+        Role::where('name', 'sales')->first()?->syncPermissions(['view products', 'create sales', 'view sales', 'create sales', 'edit sales']);
 
-        $user = User::first();
-        if ($user) {
-            $user->syncRoles(['owner']);
-        }
     }
 }

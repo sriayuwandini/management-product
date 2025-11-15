@@ -102,7 +102,6 @@
 
 <body class="font-sans antialiased bg-gray-100">
     <div class="flex">
-        <!-- Sidebar -->
         <aside class="sidebar p-4">
             <div>
                 <div class="mb-6 text-center">
@@ -152,7 +151,6 @@
                     @if(Auth::user()->hasRole('sales'))
                         <a href="{{ route('sales.products.index') }}" :active="request()->routeIs('sales.products.index')">📝 Daftar Produk</a>
                         <a href="{{ route('sales.index') }}">🛍️ Daftar Penjualan</a>
-                        <a href="{{ route('sales.reports.index') }}">📊 Laporan Penjualan</a>
                     @endif
                 </nav>
             </div>

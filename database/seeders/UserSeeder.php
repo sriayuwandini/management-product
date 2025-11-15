@@ -14,11 +14,9 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // --- 1️⃣ Buat semua role jika belum ada ---
         $roles = [
             'owner',
             'admin_produksi',
-            'admin_penjualan',
             'sales',
             'user',
         ];
@@ -27,7 +25,6 @@ class UserSeeder extends Seeder
             Role::firstOrCreate(['name' => $roleName]);
         }
 
-        // --- 2️⃣ Buat user default untuk masing-masing role ---
         $users = [
             [
                 'name' => 'Owner',
@@ -42,19 +39,13 @@ class UserSeeder extends Seeder
                 'role' => 'admin_produksi',
             ],
             [
-                'name' => 'Admin Penjualan',
-                'email' => 'penjualan@gmail.com',
-                'password' => Hash::make('password'),
-                'role' => 'admin_penjualan',
-            ],
-            [
                 'name' => 'Sales',
                 'email' => 'sales@gmail.com',
                 'password' => Hash::make('password'),
                 'role' => 'sales',
             ],
             [
-                'name' => 'User Biasa',
+                'name' => 'User',
                 'email' => 'user@gmail.com',
                 'password' => Hash::make('password'),
                 'role' => 'user',

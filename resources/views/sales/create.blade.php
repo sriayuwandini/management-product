@@ -1,119 +1,195 @@
 <x-app-layout>
     <div class="py-10">
-        <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white shadow-md rounded-lg p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Tambah Penjualan</h2>
-                    <a href="{{ route('sales.index') }}"
-                       class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg shadow">
-                        Kembali
-                    </a>
-                </div>
+        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white shadow-md rounded-lg p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                {{-- Pesan error dari server --}}
-                @if (session('error'))
-                    <div class="mb-4 p-3 bg-red-100 text-red-700 border border-red-400 rounded">
-                        {{ session('error') }}
+                <div class="col-span-1 border-r pr-4">
+                    <div class="border-b mb-3">
+                        <ul class="flex text-sm font-medium text-gray-600">
+                            <li class="mr-4">
+                                <button type="button" class="border-b-2 border-indigo-600 pb-1 text-indigo-600">
+                                    Cari Produk
+                                </button>
+                            </li>
+                        </ul>
                     </div>
-                @endif
 
-                <form action="{{ route('sales.store') }}" method="POST" class="space-y-6">
-                    @csrf
-
-                    {{-- Pilih Produk --}}
-                    <div>
-                        <label for="product_id" class="block text-sm font-medium text-gray-700">Pilih Produk</label>
-                        <select id="product_id" name="product_id"
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                                required>
-                            <option value="">-- Pilih Produk --</option>
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Produk</label>
+                        <select id="productSelect" multiple
+                            class="w-full border rounded px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}"
+                                        data-name="{{ $product->name }}"
                                         data-price="{{ $product->price }}"
-                                        data-stock="{{ $product->stock }}">
-                                    {{ $product->name }} - Rp {{ number_format($product->price,0,',','.') }}
-                                    (Stok: {{ $product->stock }})
+                                        data-user="{{ $product->user->name ?? 'Tidak diketahui' }}">
+                                    {{ $product->name }} - Rp{{ number_format($product->price, 0, ',', '.') }}
                                 </option>
                             @endforeach
                         </select>
-                        @error('product_id')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
                     </div>
 
-                    {{-- Jumlah --}}
                     <div>
-                        <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                        <input type="number" id="quantity" name="quantity" min="1"
-                               class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                               required>
-                        <p id="stock_warning" class="text-red-600 text-sm mt-1 hidden">
-                            Jumlah melebihi stok yang tersedia!
-                        </p>
-                        @error('quantity')
-                            <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                        @enderror
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Hasil Pencarian</h3>
+                        <ul id="searchResults" class="text-sm text-gray-700 space-y-2">
+                            <li class="italic text-gray-500">Belum ada hasil.</li>
+                        </ul>
                     </div>
+                </div>
 
-                    {{-- Harga otomatis tampil --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Harga per Unit</label>
-                        <p id="price_display" class="text-gray-800 font-semibold">Rp 0</p>
+                @if ($errors->any())
+                    <div class="bg-red-100 text-red-700 p-3 mb-4 rounded">
+                        <ul class="list-disc pl-5 text-sm">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
                     </div>
+                @endif
 
-                    {{-- Total otomatis tampil --}}
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Total Harga</label>
-                        <p id="total_display" class="text-gray-800 font-semibold">Rp 0</p>
-                    </div>
+                <div class="col-span-2">
+                    <form action="{{ route('sales.store') }}" method="POST" id="saleForm">
+                        @csrf
+                        <input type="hidden" name="user_id" value="{{ Auth::id() }}">
+                        <input type="hidden" name="sale_date" value="{{ now()->format('Y-m-d') }}">
 
-                    <div class="flex justify-end">
-                        <button type="submit" id="submitBtn"
-                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-grey font-medium rounded-lg shadow">
-                            Simpan
-                        </button>
-                    </div>
-                </form>
+                        <div class="flex justify-between items-center mb-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Nama Customer</label>
+                                <input type="text" id="customerName" name="customer_name"
+                                    class="bg-gray-100 border rounded px-3 py-2 text-sm" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Nama Sales</label>
+                                <input type="text" name="sales_name" value="{{ Auth::user()->name ?? 'Administrator' }}"
+                                    class="bg-gray-100 border rounded px-3 py-2 text-sm" readonly>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">Tanggal: {{ now()->translatedFormat('d F Y') }}</p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto mb-4 border rounded-lg">
+                            <table class="w-full text-sm text-left border-collapse">
+                                <thead class="bg-gray-100 text-gray-700">
+                                    <tr>
+                                        <th class="px-3 py-2 border">Nama Produk</th>
+                                        <th class="px-3 py-2 border w-32">Harga</th>
+                                        <th class="px-3 py-2 border w-24 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productRows">
+                                    <tr class="text-center text-gray-500">
+                                        <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="flex justify-end gap-2">
+                            <button type="reset"
+                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow">
+                                Kosongkan
+                            </button>
+                            <button type="submit"
+                                class="bg-indigo-600 hover:bg-indigo-700 text-grey px-4 py-2 rounded shadow">
+                                Simpan Penjualan
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
     <script>
-        const productSelect = document.getElementById('product_id');
-        const quantityInput = document.getElementById('quantity');
-        const priceDisplay = document.getElementById('price_display');
-        const totalDisplay = document.getElementById('total_display');
-        const stockWarning = document.getElementById('stock_warning');
-        const submitBtn = document.getElementById('submitBtn');
+        document.addEventListener("DOMContentLoaded", function () {
+    const customerInput = document.getElementById('customerName');
+    const selectElement = document.getElementById('productSelect');
 
-        let selectedPrice = 0;
-        let selectedStock = 0;
+    const select = new TomSelect(selectElement, {
+        plugins: ['remove_button'],
+        placeholder: "Cari atau pilih produk...",
+        persist: false,
+        create: false,
+        onChange: function(values) {
+            updateCustomerName(values);
+        }
+    });
 
-        productSelect.addEventListener('change', function() {
-            selectedPrice = this.options[this.selectedIndex].getAttribute('data-price') || 0;
-            selectedStock = this.options[this.selectedIndex].getAttribute('data-stock') || 0;
+    function updateCustomerName(values) {
+        if (values.length === 0) {
+            customerInput.value = '';
+            return;
+        }
 
-            priceDisplay.textContent = `Rp ${parseInt(selectedPrice).toLocaleString('id-ID')}`;
-            updateTotal();
+        let userNames = new Set();
+
+        values.forEach(value => {
+            const option = selectElement.querySelector(`option[value="${value}"]`);
+            if (option && option.dataset.user) {
+                userNames.add(option.dataset.user);
+            }
         });
 
-        quantityInput.addEventListener('input', updateTotal);
+        customerInput.value = Array.from(userNames).join(', ');
+    }
+});
 
-        function updateTotal() {
-            const qty = parseInt(quantityInput.value) || 0;
-            const total = qty * selectedPrice;
+        const tbody = document.getElementById('productRows');
 
-            totalDisplay.textContent = `Rp ${parseInt(total).toLocaleString('id-ID')}`;
+        function updateProductTable(values) {
+            tbody.innerHTML = ''; 
 
-            if (qty > selectedStock && selectedStock > 0) {
-                stockWarning.classList.remove('hidden');
-                submitBtn.disabled = true;
-                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            } else {
-                stockWarning.classList.add('hidden');
-                submitBtn.disabled = false;
-                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            if (values.length === 0) {
+                tbody.innerHTML = `<tr class="text-center text-gray-500">
+                    <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
+                </tr>`;
+                return;
             }
+
+            values.forEach((id, index) => {
+                const option = select.options[id];
+                const name = option.text.split(' - ')[0];
+                const priceText = option.text.split(' - ')[1];
+                const price = option.$option.dataset.price;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-3 py-2 border">${name}
+                        <input type="hidden" name="products[${index}][product_id]" value="${id}">
+                        <input type="hidden" name="products[${index}][quantity_order]" value="1">
+                    </td>
+                    <td class="px-3 py-2 border">${priceText}</td>
+                    <td class="px-3 py-2 border text-center">
+                        <button type="button"
+                            class="remove-row bg-red-500 hover:bg-red-600 text-grey text-xs px-2 py-1 rounded">
+                            Hapus
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
+
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-row')) {
+                const tr = e.target.closest('tr');
+                const input = tr.querySelector('input[name*="[product_id]"]');
+                const productId = input.value;
+
+                select.removeItem(productId);
+                tr.remove();
+
+                if (tbody.children.length === 0) {
+                    tbody.innerHTML = `<tr class="text-center text-gray-500">
+                        <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
+                    </tr>`;
+                }
+            }
+        });
     </script>
 </x-app-layout>

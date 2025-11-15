@@ -11,12 +11,16 @@ class Sales extends Model
 
     protected $fillable = [
         'user_id',
-        'product_id',
-        'quantity',
-        'price',
-        'total_price',
-        'status',
+        'invoice_number', 
+        'customer_name', 
+        'sale_date', 
+        'total_amount'
     ];
+
+    public function details()
+    {
+        return $this->hasMany(SalesDetail::class, 'sale_id');
+    }
 
     public function product()
     {

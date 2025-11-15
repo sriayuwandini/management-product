@@ -13,23 +13,12 @@ return new class extends Migration
     {
         Schema::create('sales', function (Blueprint $table) {
             $table->id();
-
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->onDelete('cascade');
-
-            $table->foreignId('product_id')
-                ->constrained('products')
-                ->onDelete('cascade');
-
-            $table->integer('quantity')->default(1);
-
-            $table->decimal('price', 10, 2);
-
-            $table->decimal('total_price', 12, 2);
-
+            $table->string('invoice_number')->unique();
+            $table->string('customer_name')->nullable();
+            $table->date('sales_date');
+            $table->decimal('total_amount', 15, 2)->default(0);
             $table->timestamps();
-        });
+        });        
     }
 
     /**
