@@ -60,13 +60,12 @@
         .dropdown {
             position: relative;
         }
-        /* Dropdown menu style fix */
         .dropdown-menu {
             display: none;
             position: absolute;
             left: 0;
             bottom: 45px;
-            background: #1f2937 !important; /* warna sidebar */
+            background: #1f2937 !important; 
             border-radius: 0.5rem;
             overflow: hidden;
             width: 200px;
@@ -133,6 +132,8 @@
                     {{-- OWNER dan ADMIN PENJUALAN --}}
                     @if(Auth::user()->hasRole('admin_penjualan') || Auth::user()->hasRole('owner'))
                         <a href="{{ route('users.index') }}">👥 Users</a>
+                        <a href="{{ route('owner.produk.index') }}">👥 Produk</a>
+                        <a href="{{ route('categories.index') }}">📂 Kategori</a>
                     @endif
 
                     {{-- ADMIN PRODUKSI --}}

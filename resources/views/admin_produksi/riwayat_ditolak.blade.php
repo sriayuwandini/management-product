@@ -12,9 +12,8 @@
 
         @forelse ($users as $user)
             @php
-                $products = $user->products;
+                $products = $user->products->where('status', 'rejected');
             @endphp
-
 
             <div class="bg-white shadow-md rounded-xl border mb-6">
                 <div class="flex justify-between items-center p-4 border-b bg-red-50">
@@ -47,6 +46,7 @@
                                     <thead class="table-light">
                                         <tr>
                                             <th>No</th>
+                                            <th>Kode Produk</th>
                                             <th>Nama Produk</th>
                                             <th>Kategori</th>
                                             <th>Harga</th>
@@ -59,19 +59,21 @@
                                     </thead>
                                     <tbody>
                                         @foreach ($products as $product)
+                                            @php $dp = $product->daftarProduk; @endphp
                                             <tr>
                                                 <td>{{ $loop->iteration }}</td>
-                                                <td>{{ $product->name }}</td>
-                                                <td>{{ $product->category->nama_kategori ?? '-' }}</td>
-                                                <td>Rp {{ number_format($product->price, 0, ',', '.') }}</td>
+                                                <td>{{ $dp->kode_produk ?? '-' }}</td>
+                                                <td>{{ $dp->nama_produk ?? '-' }}</td>
+                                                <td>{{ $dp->category->nama_kategori ?? '-' }}</td>
+                                                <td>Rp {{ number_format($dp->harga ?? 0, 0, ',', '.') }}</td>
                                                 <td>{{ $product->stock }}</td>
-                                                <td>{{ Str::limit($product->description, 60) }}</td>
+                                                <td>{{ Str::limit($dp->deskripsi ?? '-', 60) }}</td>
                                                 <td class="text-center">
-                                                    @if ($product->image && file_exists(storage_path('app/public/' . $product->image)))
+                                                    @if ($dp->foto && file_exists(storage_path('app/public/' . $dp->foto)))
                                                         <button class="border rounded-lg bg-gray-100 hover:bg-gray-200 p-1"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#fotoModal{{ $product->id }}">
-                                                            <img src="{{ asset('storage/' . $product->image) }}"
+                                                            <img src="{{ asset('storage/' . $dp->foto) }}"
                                                                 alt="Foto Produk"
                                                                 class="w-16 h-16 object-cover rounded">
                                                         </button>
@@ -95,13 +97,14 @@
             </div>
 
             @foreach ($products as $product)
-                @if ($product->image && file_exists(storage_path('app/public/' . $product->image)))
+                @php $dp = $product->daftarProduk; @endphp
+                @if ($dp && $dp->foto && file_exists(storage_path('app/public/' . $dp->foto)))
                     <div class="modal fade" id="fotoModal{{ $product->id }}" tabindex="-1" aria-labelledby="fotoLabel{{ $product->id }}" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content bg-transparent border-0 shadow-none">
                                 <div class="modal-body text-center position-relative">
                                     <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
-                                    <img src="{{ asset('storage/' . $product->image) }}"
+                                    <img src="{{ asset('storage/' . $dp->foto) }}"
                                          class="img-fluid rounded shadow-lg"
                                          alt="Foto Produk">
                                 </div>
