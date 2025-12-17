@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DaftarProduk;
 use App\Models\Category;
+use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -79,7 +80,6 @@ class DaftarProdukController extends Controller
             ->with('success', '✅ Produk berhasil ditambahkan!');
     }
 
-
     public function edit(DaftarProduk $produk)
     {
         $categories = Category::all();
@@ -137,5 +137,14 @@ class DaftarProdukController extends Controller
 
         return redirect()->route('owner.produk.index')
             ->with('success', '🗑️ Produk berhasil dihapus!');
+    }
+
+    public function salesIndex()
+    {
+        $products = DaftarProduk::where('stock', '>', 0)
+        ->orderBy('name', 'asc')
+        ->paginate(10);
+
+    return view('sales.products', compact('products'));
     }
 }

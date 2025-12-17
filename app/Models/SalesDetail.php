@@ -21,8 +21,8 @@ class SalesDetail extends Model
         return $this->belongsTo(Sales::class);
     }
 
-    public function product()
+    public function produk()
     {
-        return $this->belongsTo(Product::class);
+        return $this->belongsTo(DaftarProduk::class, 'product_id');
     }
 }

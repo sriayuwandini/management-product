@@ -3,23 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sales;
-use App\Models\Product;
+use App\Models\DaftarProduk;
 use App\Models\SalesDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
-
 class SalesController extends Controller
 {
-    /**
-     * Tampilkan semua data penjualan milik sales yang login.
-     */
     public function index()
     {
-        $sales = Sales::with('product')
-            ->where('user_id', Auth::id())
+
+        $sales = Sales::with('details.produk.stockLogs.user')
+        ->where('user_id', Auth::id())
             ->latest()
             ->paginate(10)
             ->through(function ($sale) {
@@ -33,7 +30,7 @@ class SalesController extends Controller
 
     public function create()
     {
-        $products = Product::all();
+        $products = DaftarProduk::all();
         return view('sales.create', compact('products'));
     }
 
@@ -41,9 +38,8 @@ class SalesController extends Controller
     {
         $request->validate([
             'customer_name' => 'required|string|max:255',
-            'user_id'       => 'required|exists:users,id',
             'products'      => 'required|array|min:1',
-            'products.*.product_id' => 'required|exists:products,id',
+            'products.*.product_id' => 'required|exists:daftar_produks,id',
         ]);
 
         DB::transaction(function () use ($request) {
@@ -54,22 +50,21 @@ class SalesController extends Controller
                 'sale_date'      => $request->sale_date,
                 'total_amount'   => 0,
             ]);
-            
 
             $total = 0;
 
             foreach ($request->products as $item) {
-                $product = Product::findOrFail($item['product_id']);
-                $subtotal = $product->price;
+                $product = DaftarProduk::findOrFail($item['product_id']);
+                $subtotal = $product->harga;
 
                 SalesDetail::create([
-                    'sale_id' => $sale->id,
-                    'product_id' => $product->id,
-                    'quantity_order' => 1,
-                    'quantity_delivery' => 0,
-                    'quantity_sold' => 0,
-                    'price' => $product->price,
-                    'subtotal' => $subtotal,
+                    'sale_id'          => $sale->id,
+                    'product_id'       => $product->id,
+                    'quantity_order'   => 1,
+                    'quantity_delivery'=> 0,
+                    'quantity_sold'    => 0,
+                    'price'            => $product->harga,
+                    'subtotal'         => $subtotal,
                 ]);
 
                 $total += $subtotal;
@@ -84,74 +79,70 @@ class SalesController extends Controller
     public function show(Sales $sale)
     {
         $this->authorizeSale($sale);
-    
-        $sale->load('product');
-    
+        $sale->load('details.produk');
+
         return view('sales.show', compact('sale'));
     }
-    
 
     public function edit(Sales $sale)
-{
-    $this->authorizeSale($sale);
+    {
+        $this->authorizeSale($sale);
 
-    $products = Product::all();
+        $products = DaftarProduk::all();
+        $sale->load('details.produk');
 
-    $sale->load('details.product');
+        return view('sales.edit', compact('sale', 'products'));
+    }
 
-    return view('sales.edit', compact('sale', 'products'));
-}
+    public function update(Request $request, Sales $sale)
+    {
+        $this->authorizeSale($sale);
 
+        $request->validate([
+            'details' => 'required|array|min:1',
+            'details.*.id' => 'required|exists:sales_details,id',
+            'details.*.quantity_order' => 'nullable|integer|min:0',
+            'details.*.quantity_delivery' => 'nullable|integer|min:0',
+            'details.*.quantity_sold' => 'nullable|integer|min:0',
+        ]);
 
-public function update(Request $request, Sales $sale)
-{
-    $this->authorizeSale($sale);
+        DB::transaction(function () use ($request, $sale) {
+            $total = 0;
 
-    $request->validate([
-        'details' => 'required|array|min:1',
-        'details.*.id' => 'required|exists:sales_details,id',
-        'details.*.quantity_order' => 'nullable|integer|min:0',
-        'details.*.quantity_delivery' => 'nullable|integer|min:0',
-        'details.*.quantity_sold' => 'nullable|integer|min:0',
-    ]);
+            foreach ($request->details as $detailData) {
+                $detail = SalesDetail::with('produk')->findOrFail($detailData['id']);
+                $product = $detail->produk;
 
-    DB::transaction(function () use ($request, $sale) {
-        $total = 0;
+                $oldQtySold = $detail->quantity_sold;
+                $newQtySold = $detailData['quantity_sold'] ?? 0;
+                $difference = $newQtySold - $oldQtySold;
 
-        foreach ($request->details as $detailData) {
-            $detail = SalesDetail::with('product')->findOrFail($detailData['id']);
-            $product = $detail->product;
-
-            $oldQtySold = $detail->quantity_sold;
-            $newQtySold = $detailData['quantity_sold'] ?? 0;
-            $difference = $newQtySold - $oldQtySold;
-
-            if ($difference > 0) {
-                if ($product->stock < $difference) {
-                    throw new \Exception("Stok produk {$product->name} tidak cukup!");
+                if ($difference > 0) {
+                    if ($product->stock < $difference) {
+                        throw new \Exception("Stok produk {$product->nama_produk} tidak cukup!");
+                    }
+                    $product->decrement('stock', $difference);
+                } elseif ($difference < 0) {
+                    $product->increment('stock', abs($difference));
                 }
-                $product->decrement('stock', $difference);
-            } elseif ($difference < 0) {
-                $product->increment('stock', abs($difference));
+
+                $subtotal = $product->harga * $newQtySold;
+
+                $detail->update([
+                    'quantity_order'    => $detailData['quantity_order'] ?? 0,
+                    'quantity_delivery' => $detailData['quantity_delivery'] ?? 0,
+                    'quantity_sold'     => $newQtySold,
+                    'subtotal'          => $subtotal,
+                ]);
+
+                $total += $subtotal;
             }
 
-            $subtotal = $product->price * $newQtySold;
+            $sale->update(['total_amount' => $total]);
+        });
 
-            $detail->update([
-                'quantity_order'    => $detailData['quantity_order'] ?? 0,
-                'quantity_delivery' => $detailData['quantity_delivery'] ?? 0,
-                'quantity_sold'     => $newQtySold,
-                'subtotal'          => $subtotal,
-            ]);
-
-            $total += $subtotal;
-        }
-
-        $sale->update(['total_amount' => $total]);
-    });
-
-    return redirect()->route('sales.index')->with('success', 'Data penjualan berhasil diperbarui dan stok diperbaharui.');
-}
+        return redirect()->route('sales.index')->with('success', 'Data penjualan berhasil diperbarui dan stok diperbaharui.');
+    }
 
     public function destroy(Sales $sale)
     {
@@ -171,9 +162,11 @@ public function update(Request $request, Sales $sale)
     public function searchProduct(Request $request)
     {
         $query = $request->get('query');
-        $products = Product::where('name', 'like', "%{$query}%")->limit(10)->get();
+
+        $products = DaftarProduk::where('nama_produk', 'like', "%{$query}%")
+            ->limit(10)
+            ->get();
 
         return response()->json($products);
     }
-
 }

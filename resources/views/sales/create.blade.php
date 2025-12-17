@@ -20,10 +20,10 @@
                             class="w-full border rounded px-3 py-2 focus:ring-indigo-500 focus:border-indigo-500">
                             @foreach ($products as $product)
                                 <option value="{{ $product->id }}"
-                                        data-name="{{ $product->name }}"
-                                        data-price="{{ $product->price }}"
-                                        data-user="{{ $product->user->name ?? 'Tidak diketahui' }}">
-                                    {{ $product->name }} - Rp{{ number_format($product->price, 0, ',', '.') }}
+                                        data-name="{{ $product->nama_produk }}"
+                                        data-price="{{ $product->harga }}"
+                                        data-user="{{ $product->stockLogs->sortByDesc('created_at')->first()?->user?->name ?? 'Customer' }}">
+                                        {{ $product->nama_produk }} - Rp{{ number_format($product->harga, 0, ',', '.') }}
                                 </option>
                             @endforeach
                         </select>
@@ -106,90 +106,101 @@
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-    const customerInput = document.getElementById('customerName');
-    const selectElement = document.getElementById('productSelect');
+    let select; 
+    let selectElement;
+    let tbody;
 
-    const select = new TomSelect(selectElement, {
-        plugins: ['remove_button'],
-        placeholder: "Cari atau pilih produk...",
-        persist: false,
-        create: false,
-        onChange: function(values) {
-            updateCustomerName(values);
-        }
-    });
+    document.addEventListener("DOMContentLoaded", function () {
 
-    function updateCustomerName(values) {
-        if (values.length === 0) {
-            customerInput.value = '';
-            return;
-        }
+        selectElement = document.getElementById('productSelect');
+        const customerInput = document.getElementById('customerName');
+        tbody = document.getElementById('productRows');
 
-        let userNames = new Set();
-
-        values.forEach(value => {
-            const option = selectElement.querySelector(`option[value="${value}"]`);
-            if (option && option.dataset.user) {
-                userNames.add(option.dataset.user);
+        select = new TomSelect(selectElement, {
+            plugins: ['remove_button'],
+            placeholder: "Cari atau pilih produk...",
+            persist: false,
+            create: false,
+            onChange: function(values) {
+                updateCustomerName(values);
+                updateProductTable(values);
             }
         });
 
-        customerInput.value = Array.from(userNames).join(', ');
-    }
-});
-
-        const tbody = document.getElementById('productRows');
-
-        function updateProductTable(values) {
-            tbody.innerHTML = ''; 
-
+        function updateCustomerName(values) {
             if (values.length === 0) {
-                tbody.innerHTML = `<tr class="text-center text-gray-500">
-                    <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
-                </tr>`;
+                customerInput.value = '';
                 return;
             }
 
-            values.forEach((id, index) => {
-                const option = select.options[id];
-                const name = option.text.split(' - ')[0];
-                const priceText = option.text.split(' - ')[1];
-                const price = option.$option.dataset.price;
+            let userNames = new Set();
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-3 py-2 border">${name}
-                        <input type="hidden" name="products[${index}][product_id]" value="${id}">
-                        <input type="hidden" name="products[${index}][quantity_order]" value="1">
-                    </td>
-                    <td class="px-3 py-2 border">${priceText}</td>
-                    <td class="px-3 py-2 border text-center">
-                        <button type="button"
-                            class="remove-row bg-red-500 hover:bg-red-600 text-grey text-xs px-2 py-1 rounded">
-                            Hapus
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+            values.forEach(value => {
+                const option = selectElement.querySelector(`option[value="${value}"]`);
+                if (option && option.dataset.user) {
+                    userNames.add(option.dataset.user);
+                }
             });
+
+            customerInput.value = Array.from(userNames).join(', ');
+        }
+    });
+
+    function updateProductTable(values) {
+        tbody.innerHTML = '';
+
+        if (values.length === 0) {
+            tbody.innerHTML = `
+                <tr class="text-center text-gray-500">
+                    <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
+                </tr>`;
+            return;
         }
 
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('remove-row')) {
-                const tr = e.target.closest('tr');
-                const input = tr.querySelector('input[name*="[product_id]"]');
-                const productId = input.value;
+        values.forEach((id, index) => {
 
-                select.removeItem(productId);
-                tr.remove();
+            const option = selectElement.querySelector(`option[value="${id}"]`);
+            if (!option) return;
 
-                if (tbody.children.length === 0) {
-                    tbody.innerHTML = `<tr class="text-center text-gray-500">
+            const name = option.dataset.name;
+            const price = option.dataset.price;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="px-3 py-2 border">${name}
+                    <input type="hidden" name="products[${index}][product_id]" value="${id}">
+                    <input type="hidden" name="products[${index}][quantity_order]" value="1">
+                </td>
+                <td class="px-3 py-2 border">Rp${parseInt(price).toLocaleString('id-ID')}</td>
+                <td class="px-3 py-2 border text-center">
+                    <button type="button"
+                        class="remove-row bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">
+                        Hapus
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+
+        if (e.target.classList.contains('remove-row')) {
+            const tr = e.target.closest('tr');
+            const input = tr.querySelector('input[name*="[product_id]"]');
+            const productId = input.value;
+
+            select.removeItem(productId);
+
+            tr.remove();
+
+            if (tbody.children.length === 0) {
+                tbody.innerHTML = `
+                    <tr class="text-center text-gray-500">
                         <td colspan="3" class="py-3 italic">Belum ada produk ditambahkan.</td>
                     </tr>`;
-                }
             }
-        });
-    </script>
+        }
+    });
+</script>
 </x-app-layout>

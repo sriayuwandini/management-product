@@ -40,10 +40,17 @@
                                 <td class="px-5 py-3">{{ Auth::user()->name ?? 'Administrator' }}</td>
                                 <td class="px-5 py-3">
                                     @php
-                                        $productUser = optional($sale->details->first()->product->user ?? null)->name;
+                                        $users = $sale->details
+                                            ->flatMap(function($detail) {
+                                                return $detail->produk->stockLogs
+                                                    ->sortByDesc('created_at')
+                                                    ->pluck('user.name')
+                                                    ->filter();
+                                            })
+                                            ->unique(); 
                                     @endphp
 
-                                    {{ $productUser ?? '-' }}
+                                    {{ $users->implode(', ') ?: '-' }}
                                 </td>
                                 <td class="px-5 py-3 text-gray-700">
                                     {{ $sale->details->count() }} item
@@ -97,7 +104,7 @@
                                                 @foreach ($sale->details as $detail)
                                                     <tr>
                                                         <td class="px-3 py-2 border">
-                                                            {{ $detail->product->name ?? '-' }}
+                                                            {{ $detail->produk->nama_produk ?? '-' }}
                                                         </td>
                                                         <td class="px-3 py-2 border text-center">
                                                             Rp {{ number_format($detail->price, 0, ',', '.') }}

@@ -31,7 +31,7 @@
                                 @foreach ($sale->details as $index => $detail)
                                     <tr class="hover:bg-gray-50 transition">
                                         <td class="px-4 py-3 font-medium text-gray-800">
-                                            {{ $detail->product->name }}
+                                            {{ $detail->produk->nama_produk }}
                                         </td>
                                         <td class="px-4 py-3 text-center">
                                             Rp{{ number_format($detail->price, 0, ',', '.') }}
