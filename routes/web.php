@@ -61,6 +61,7 @@ Route::middleware(['auth', 'verified', 'role:admin_penjualan'])->group(function 
 Route::middleware(['auth', 'verified', 'role:sales'])->group(function () {
     // Route::get('/sales/dashboard', [SalesController::class, 'dashboard'])->name('dashboard');
     Route::get('/sales/search-product', [SalesController::class, 'searchProduct'])->name('sales.searchProduct');
+    Route::post('/sales/{sale}/payment', [SalesController::class, 'storePayment'])->name('sales.payment');
 
     Route::get('/sales/products', [ProductController::class, 'salesIndex'])->name('sales.products.index');
     Route::resource('sales', SalesController::class);

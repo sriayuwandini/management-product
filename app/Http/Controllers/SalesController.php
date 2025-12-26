@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Sales;
 use App\Models\DaftarProduk;
 use App\Models\SalesDetail;
+use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -98,35 +99,34 @@ class SalesController extends Controller
     {
         $this->authorizeSale($sale);
 
-        $request->validate([
-            'details' => 'required|array|min:1',
-            'details.*.id' => 'required|exists:sales_details,id',
-            'details.*.quantity_order' => 'nullable|integer|min:0',
-            'details.*.quantity_delivery' => 'nullable|integer|min:0',
-            'details.*.quantity_sold' => 'nullable|integer|min:0',
-        ]);
-
         DB::transaction(function () use ($request, $sale) {
             $total = 0;
 
             foreach ($request->details as $detailData) {
                 $detail = SalesDetail::with('produk')->findOrFail($detailData['id']);
-                $product = $detail->produk;
+                $produk = $detail->produk;
 
                 $oldQtySold = $detail->quantity_sold;
-                $newQtySold = $detailData['quantity_sold'] ?? 0;
+                $newQtySold = max(0, (int) ($detailData['quantity_sold'] ?? 0));
                 $difference = $newQtySold - $oldQtySold;
 
+                // 🔥 AMBIL STOK DARI TABEL products
+                $productStock = Product::where('daftar_produks_id', $produk->id)
+                    ->where('stock', '>', 0)
+                    ->lockForUpdate()
+                    ->first();
+
                 if ($difference > 0) {
-                    if ($product->stock < $difference) {
-                        throw new \Exception("Stok produk {$product->nama_produk} tidak cukup!");
+                    if (!$productStock || $productStock->stock < $difference) {
+                        throw new \Exception("Stok produk {$produk->nama_produk} tidak cukup!");
                     }
-                    $product->decrement('stock', $difference);
-                } elseif ($difference < 0) {
-                    $product->increment('stock', abs($difference));
+                    $productStock->decrement('stock', $difference);
+                } elseif ($difference < 0 && $productStock) {
+                    $productStock->increment('stock', abs($difference));
                 }
 
-                $subtotal = $product->harga * $newQtySold;
+                // 🔥 SUBTOTAL OTOMATIS DARI QTY SOLD
+                $subtotal = $produk->harga * $newQtySold;
 
                 $detail->update([
                     'quantity_order'    => $detailData['quantity_order'] ?? 0,
@@ -141,7 +141,8 @@ class SalesController extends Controller
             $sale->update(['total_amount' => $total]);
         });
 
-        return redirect()->route('sales.index')->with('success', 'Data penjualan berhasil diperbarui dan stok diperbaharui.');
+        return redirect()->route('sales.index')
+            ->with('success', 'Data penjualan berhasil diperbarui.');
     }
 
     public function destroy(Sales $sale)
@@ -169,4 +170,48 @@ class SalesController extends Controller
 
         return response()->json($products);
     }
+
+    public function storePayment(Request $request, Sales $sale)
+{
+    $this->authorizeSale($sale);
+
+    // 1️⃣ VALIDASI QTY SOLD
+    $totalQtySold = $sale->details()->sum('quantity_sold');
+    if ($totalQtySold < 1) {
+        return back()
+            ->withErrors([
+                'payment' => 'Qty sold minimal harus 1 sebelum melakukan pembayaran.'
+            ])
+            ->withInput()
+            ->with('open_detail', $sale->id);
+    }
+
+    // 2️⃣ VALIDASI FORM
+    $request->validate([
+        'payment_method' => 'required|in:cash,transfer',
+        'payment_proof'  => 'required_if:payment_method,transfer|image|max:2048',
+    ], [
+        'payment_proof.required_if' => 'Bukti transfer wajib diunggah.',
+    ]);
+
+    // 3️⃣ SIMPAN DATA PEMBAYARAN
+    $data = [
+        'payment_method' => $request->payment_method,
+        'payment_at'     => now(),
+    ];
+
+    if ($request->payment_method === 'transfer') {
+        $data['payment_proof'] = $request->file('payment_proof')
+            ->store('payment_proofs', 'public');
+    }
+
+    $sale->update($data);
+
+    // 4️⃣ SUKSES
+    return back()
+        ->with('success', 'Pembayaran berhasil diproses.')
+        ->with('open_detail', $sale->id);
+}
+
+
 }

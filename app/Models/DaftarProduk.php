@@ -42,6 +42,10 @@ class DaftarProduk extends Model
         return $this->hasMany(StockLog::class, 'product_id');
     }
 
-    
+    public function product()
+    {
+        return $this->belongsTo(Product::class, 'product_id');
+    }
+ 
 }
 

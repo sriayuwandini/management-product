@@ -130,11 +130,14 @@ class ProductController extends Controller
 
     public function salesIndex()
     {
-        $products = Product::where('stock', '>', 0)
-        ->orderBy('name', 'asc')
-        ->paginate(10);
+        $products = Product::with('daftarProduk')
+            ->where('stock', '>', 0)
+            ->whereHas('daftarProduk', function ($q) {
+                $q->orderBy('nama_produk', 'asc');
+            })
+            ->paginate(10);
 
-    return view('sales.products', compact('products'));
+        return view('sales.products', compact('products'));
     }
 
 }

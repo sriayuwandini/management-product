@@ -88,7 +88,7 @@
 
                         <div class="flex justify-end gap-2">
                             <button type="reset"
-                                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow">
+                                class="bg-red-600 hover:bg-red-700 text-black px-4 py-2 rounded shadow">
                                 Kosongkan
                             </button>
                             <button type="submit"
@@ -174,7 +174,7 @@
                 <td class="px-3 py-2 border">Rp${parseInt(price).toLocaleString('id-ID')}</td>
                 <td class="px-3 py-2 border text-center">
                     <button type="button"
-                        class="remove-row bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded">
+                        class="remove-row bg-red-500 hover:bg-red-600 text-black text-xs px-2 py-1 rounded">
                         Hapus
                     </button>
                 </td>

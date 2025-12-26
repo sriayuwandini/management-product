@@ -21,9 +21,9 @@
                         @forelse ($products as $product)
                             <tr class="hover:bg-gray-50">
                                 <td class="px-6 py-3">{{ $loop->iteration }}</td>
-                                <td class="px-6 py-3 font-medium text-gray-800">{{ $product->name }}</td>
+                                <td class="px-6 py-3 font-medium text-gray-800">{{ $product->daftarProduk->nama_produk ?? '-' }}</td>
                                 <td class="px-6 py-3">
-                                    Rp {{ number_format($product->price, 0, ',', '.') }}
+                                    Rp {{ number_format($product->daftarProduk->harga ?? 0, 0, ',', '.') }}
                                 </td>
                                 <td class="px-6 py-3">
                                     @if ($product->stock > 10)

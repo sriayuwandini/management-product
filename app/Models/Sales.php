@@ -14,7 +14,10 @@ class Sales extends Model
         'invoice_number', 
         'customer_name', 
         'sale_date', 
-        'total_amount'
+        'total_amount',
+        'payment_method',
+        'payment_proof',
+        'payment_at'
     ];
 
     public function details()

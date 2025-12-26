@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\DaftarProduk;
 use App\Models\Category;
+use App\Models\Product;
 use Illuminate\Container\Attributes\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
